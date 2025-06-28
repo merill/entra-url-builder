@@ -5783,19 +5783,42 @@ const GRAPH_PERMISSIONS = [
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.value === 'admin_consent';
             
+            // Fields to hide for admin consent
+            const fieldsToHide = [
+                document.querySelector('[for="responseType"]').closest('.space-y-2'), // Response Type field
+                document.querySelector('[for="state"]').closest('.space-y-2'), // State field (optional params)
+                document.querySelector('[for="nonce"]').closest('.space-y-2'), // Nonce field
+                document.querySelector('[for="responseMode"]').closest('.space-y-2'), // Response Mode field
+                document.querySelector('[for="prompt"]').closest('.space-y-2'), // Prompt field
+                document.querySelector('[for="loginHint"]').closest('.space-y-2'), // Login Hint field
+                document.querySelector('[for="domainHint"]').closest('.space-y-2') // Domain Hint field
+            ];
+            
+            // Optional Parameters section
+            const optionalParamsSection = document.querySelector('#optionalParamsSection').closest('.space-y-4');
+            
             if (isAdminConsent) {
                 // Show admin consent fields
                 adminConsentFields.classList.remove('field-hidden');
                 
-                // Update help text for admin consent
-                document.getElementById('redirectUriHelp').textContent = 'Optional redirect URI for admin consent callback. If not provided, admin will be redirected to the app registration portal';
-                document.getElementById('scopeHelp').textContent = 'API permissions that require admin consent. Use space-separated scopes like https://graph.microsoft.com/.default';
-                document.getElementById('responseTypeHelp').textContent = 'Not used for admin consent URLs, but kept for consistency';
+                // Hide fields not applicable to admin consent
+                fieldsToHide.forEach(field => {
+                    if (field) field.classList.add('field-hidden');
+                });
                 
-                // Update labels
-                document.querySelector('label[for="redirectUri"] span').style.display = 'none'; // Hide required asterisk
-                document.querySelector('label[for="scope"] span').style.display = 'none'; // Hide required asterisk
-                redirectUriInput.removeAttribute('required');
+                // Hide the entire Optional Parameters section
+                if (optionalParamsSection) {
+                    optionalParamsSection.classList.add('field-hidden');
+                }
+                
+                // Update help text for admin consent
+                document.getElementById('redirectUriHelp').textContent = 'Redirect URI for admin consent callback. Must exactly match a URI configured in your app registration\'s Authentication settings';
+                document.getElementById('scopeHelp').textContent = 'API permissions that require admin consent. Use space-separated scopes like https://graph.microsoft.com/.default';
+                
+                // Make redirect URI and scope required for admin consent
+                document.querySelector('label[for="redirectUri"] span').style.display = 'inline'; // Show required asterisk
+                document.querySelector('label[for="scope"] span').style.display = 'inline'; // Show required asterisk
+                redirectUriInput.setAttribute('required', 'true');
                 
                 // Set default scope for admin consent
                 if (scopeInput.value === 'openid profile email offline_access https://graph.microsoft.com/User.Read') {
@@ -5805,10 +5828,19 @@ const GRAPH_PERMISSIONS = [
                 // Hide admin consent fields
                 adminConsentFields.classList.add('field-hidden');
                 
+                // Show fields applicable to regular auth
+                fieldsToHide.forEach(field => {
+                    if (field) field.classList.remove('field-hidden');
+                });
+                
+                // Show the Optional Parameters section
+                if (optionalParamsSection) {
+                    optionalParamsSection.classList.remove('field-hidden');
+                }
+                
                 // Restore original help text
                 document.getElementById('redirectUriHelp').textContent = 'Where users are sent after authentication. Must exactly match a URI configured in your app registration\'s Authentication settings';
                 document.getElementById('scopeHelp').textContent = 'Permissions your app requests. Include \'openid\' for OIDC, \'profile\' for user info, \'email\' for email claims, \'offline_access\' for refresh tokens, plus any API scopes';
-                document.getElementById('responseTypeHelp').textContent = 'Determines what is returned: \'code\' for authorization code (most secure), \'id_token\' for immediate token (less secure), or both for hybrid flows';
                 
                 // Restore required fields
                 document.querySelector('label[for="redirectUri"] span').style.display = 'inline'; // Show required asterisk
@@ -5937,14 +5969,26 @@ const GRAPH_PERMISSIONS = [
                 return;
             }
 
-            if (!isAdminConsent && (!redirectUri || !scope)) {
-                showMessage('Client ID, Redirect URI, and Scope are required fields for authorization URLs.', 'error');
-                return;
-            }
-
-            if (isAdminConsent && !scope) {
-                showMessage('Client ID and Scope are required for admin consent URLs.', 'error');
-                return;
+            if (isAdminConsent) {
+                // Admin consent validation: tenant ID, client ID, redirect URI, and scope are required
+                if (baseUrlType.value === 'specific' && !tenantId) {
+                    showMessage('Tenant ID is required for admin consent with specific tenant.', 'error');
+                    return;
+                }
+                if (!redirectUri) {
+                    showMessage('Redirect URI is required for admin consent URLs.', 'error');
+                    return;
+                }
+                if (!scope) {
+                    showMessage('Scope is required for admin consent URLs.', 'error');
+                    return;
+                }
+            } else {
+                // Regular authorization validation
+                if (!redirectUri || !scope) {
+                    showMessage('Client ID, Redirect URI, and Scope are required fields for authorization URLs.', 'error');
+                    return;
+                }
             }
 
             // Construct query parameters
@@ -5952,13 +5996,9 @@ const GRAPH_PERMISSIONS = [
             params.append('client_id', clientId);
 
             if (isAdminConsent) {
-                // Admin consent specific parameters
-                if (redirectUri) {
-                    params.append('redirect_uri', redirectUri);
-                }
-                if (scope) {
-                    params.append('scope', scope);
-                }
+                // Admin consent specific parameters - all are required except state
+                params.append('redirect_uri', redirectUri);
+                params.append('scope', scope);
                 if (adminConsentState.value.trim()) {
                     params.append('state', adminConsentState.value.trim());
                 }

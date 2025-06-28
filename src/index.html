@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entra Sign-in URL Generator</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general body styling */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f2f5; /* Light gray background */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh; /* Full viewport height */
+            padding: 20px; /* Padding around the content */
+        }
+        /* Styling for the main container */
+        .container {
+            background-color: #ffffff; /* White background for the form */
+            border-radius: 12px; /* Rounded corners */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
+            padding: 32px; /* Inner padding */
+            max-width: 900px; /* Max width for larger screens */
+            width: 100%; /* Full width on smaller screens */
+            box-sizing: border-box; /* Include padding in width calculation */
+        }
+        /* Styling for form labels */
+        label {
+            font-weight: 500; /* Medium font weight */
+            color: #333; /* Darker text color */
+            margin-bottom: 4px; /* Space below label */
+            display: block; /* Make label a block element */
+        }
+        /* Styling for input fields and textareas */
+        input[type="text"],
+        input[type="url"],
+        textarea,
+        select {
+            width: 100%; /* Full width */
+            padding: 10px 12px; /* Padding inside input */
+            border: 1px solid #d1d5db; /* Light gray border */
+            border-radius: 8px; /* Rounded corners */
+            margin-bottom: 16px; /* Space below input */
+            font-size: 1rem; /* Standard font size */
+            color: #374151; /* Dark gray text */
+            box-sizing: border-box; /* Include padding and border in width */
+            transition: border-color 0.2s ease-in-out; /* Smooth transition for focus */
+        }
+        input[type="text"]:focus,
+        input[type="url"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none; /* Remove default outline */
+            border-color: #3b82f6; /* Blue border on focus */
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue shadow on focus */
+        }
+        /* Styling for buttons */
+        button {
+            padding: 12px 24px; /* Padding for buttons */
+            border-radius: 8px; /* Rounded corners */
+            font-weight: 600; /* Semi-bold font weight */
+            cursor: pointer; /* Pointer cursor on hover */
+            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out; /* Smooth transitions */
+        }
+        /* Primary button styling */
+        .btn-primary {
+            background-color: #3b82f6; /* Blue background */
+            color: #ffffff; /* White text */
+            border: none; /* No border */
+        }
+        .btn-primary:hover {
+            background-color: #2563eb; /* Darker blue on hover */
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        .btn-primary:active {
+            transform: translateY(0); /* Reset on click */
+        }
+        /* Secondary button styling */
+        .btn-secondary {
+            background-color: #e5e7eb; /* Light gray background */
+            color: #4b5563; /* Dark gray text */
+            border: 1px solid #d1d5db; /* Light gray border */
+        }
+        .btn-secondary:hover {
+            background-color: #d1d5db; /* Darker gray on hover */
+            transform: translateY(-1px); /* Slight lift on hover */
+        }
+        .btn-secondary:active {
+            transform: translateY(0); /* Reset on click */
+        }
+        /* Styling for the result area */
+        #resultUrl {
+            background-color: #e0f2fe; /* Light blue background */
+            border: 1px solid #90cdf4; /* Blue border */
+            padding: 16px; /* Padding */
+            border-radius: 8px; /* Rounded corners */
+            word-break: break-all; /* Break long words */
+            font-family: monospace; /* Monospace font for URL */
+            font-size: 0.9rem; /* Slightly smaller font */
+            color: #1e40af; /* Dark blue text */
+            min-height: 80px; /* Minimum height */
+            resize: vertical; /* Allow vertical resizing */
+        }
+        /* Responsive grid for form fields */
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr; /* Single column by default */
+            gap: 16px; /* Gap between grid items */
+        }
+        @media (min-width: 640px) { /* Small screens and up */
+            .form-grid {
+                grid-template-columns: repeat(2, 1fr); /* Two columns */
+            }
+        }
+        @media (min-width: 768px) { /* Medium screens and up */
+            .form-grid {
+                grid-template-columns: repeat(3, 1fr); /* Three columns */
+            }
+        }
+        /* Styling for the button group */
+        .button-group {
+            display: flex;
+            gap: 12px; /* Space between buttons */
+            justify-content: flex-end; /* Align buttons to the right */
+            margin-top: 24px; /* Space above buttons */
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Entra Sign-in URL Generator</h1>
+
+        <form id="urlForm" class="space-y-6">
+            <div class="form-grid">
+                <!-- Base URL Section -->
+                <div class="col-span-full">
+                    <label for="baseUrlType">Base URL Type:</label>
+                    <select id="baseUrlType" class="w-full p-2 border border-gray-300 rounded-lg">
+                        <option value="specific">Specific Tenant</option>
+                        <option value="common">Multi-tenant (common)</option>
+                        <option value="consumers">Microsoft Accounts (consumers)</option>
+                        <option value="organizations">Work/School & Personal (organizations)</option>
+                    </select>
+                </div>
+                <div class="col-span-full" id="tenantIdField">
+                    <label for="tenantId">Tenant ID or Name:</label>
+                    <input type="text" id="tenantId" placeholder="e.g., yourcompany.onmicrosoft.com or tenant-id">
+                </div>
+
+                <!-- Essential Parameters -->
+                <div>
+                    <label for="clientId">Client ID (Application ID):</label>
+                    <input type="text" id="clientId" placeholder="Required" required>
+                </div>
+                <div>
+                    <label for="redirectUri">Redirect URI:</label>
+                    <input type="url" id="redirectUri" placeholder="Required (e.g., http://localhost:3000/callback)" required>
+                </div>
+                <div>
+                    <label for="scope">Scope (space-separated):</label>
+                    <input type="text" id="scope" value="openid profile email offline_access https://graph.microsoft.com/User.Read" placeholder="Required">
+                </div>
+                <div>
+                    <label for="responseType">Response Type:</label>
+                    <select id="responseType" class="w-full p-2 border border-gray-300 rounded-lg">
+                        <option value="code">code (Auth Code Flow)</option>
+                        <option value="id_token">id_token (Implicit Flow)</option>
+                        <option value="code id_token">code id_token</option>
+                    </select>
+                </div>
+
+                <!-- Optional Parameters -->
+                <div>
+                    <label for="state">State:</label>
+                    <input type="text" id="state" placeholder="Optional (for CSRF protection)">
+                </div>
+                <div>
+                    <label for="nonce">Nonce:</label>
+                    <input type="text" id="nonce" placeholder="Optional (for replay protection)">
+                </div>
+                <div>
+                    <label for="responseMode">Response Mode:</label>
+                    <select id="responseMode" class="w-full p-2 border border-gray-300 rounded-lg">
+                        <option value="form_post">form_post</option>
+                        <option value="query">query</option>
+                        <option value="fragment">fragment</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="prompt">Prompt:</label>
+                    <select id="prompt" class="w-full p-2 border border-gray-300 rounded-lg">
+                        <option value="">None</option>
+                        <option value="select_account">select_account</option>
+                        <option value="consent">consent</option>
+                        <option value="login">login</option>
+                        <option value="none">none (silent)</option>
+                    </select>
+                </div>
+                <div>
+                    <label for="loginHint">Login Hint:</label>
+                    <input type="text" id="loginHint" placeholder="Optional (e.g., user@example.com)">
+                </div>
+                <div>
+                    <label for="domainHint">Domain Hint:</label>
+                    <input type="text" id="domainHint" placeholder="Optional (e.g., contoso.com)">
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button type="submit" class="btn-primary">Generate URL</button>
+                <button type="button" id="clearForm" class="btn-secondary">Clear Form</button>
+            </div>
+        </form>
+
+        <div class="mt-8">
+            <label for="generatedUrl" class="text-lg font-semibold text-gray-700 mb-2">Generated Sign-in URL:</label>
+            <textarea id="generatedUrl" rows="6" readonly class="w-full p-4 border border-blue-300 rounded-lg bg-blue-50 text-blue-800 resize-y"></textarea>
+            <button id="copyUrl" class="btn-primary w-full mt-4">Copy URL to Clipboard</button>
+            <div id="messageBox" class="mt-4 p-3 rounded-lg text-center hidden"></div>
+        </div>
+    </div>
+
+    <script>
+        // Get references to DOM elements
+        const urlForm = document.getElementById('urlForm');
+        const baseUrlType = document.getElementById('baseUrlType');
+        const tenantIdField = document.getElementById('tenantIdField');
+        const tenantIdInput = document.getElementById('tenantId');
+        const clientIdInput = document.getElementById('clientId');
+        const redirectUriInput = document.getElementById('redirectUri');
+        const scopeInput = document.getElementById('scope');
+        const responseTypeSelect = document.getElementById('responseType');
+        const stateInput = document.getElementById('state');
+        const nonceInput = document.getElementById('nonce');
+        const responseModeSelect = document.getElementById('responseMode');
+        const promptSelect = document.getElementById('prompt');
+        const loginHintInput = document.getElementById('loginHint');
+        const domainHintInput = document.getElementById('domainHint');
+        const generatedUrlTextarea = document.getElementById('generatedUrl');
+        const copyUrlButton = document.getElementById('copyUrl');
+        const clearFormButton = document.getElementById('clearForm');
+        const messageBox = document.getElementById('messageBox');
+
+        // Function to show/hide tenantId field based on baseUrlType
+        function toggleTenantIdField() {
+            if (baseUrlType.value === 'specific') {
+                tenantIdField.style.display = 'block';
+                tenantIdInput.setAttribute('required', 'true');
+            } else {
+                tenantIdField.style.display = 'none';
+                tenantIdInput.removeAttribute('required');
+                tenantIdInput.value = ''; // Clear tenant ID if not specific
+            }
+        }
+
+        // Event listener for baseUrlType change
+        baseUrlType.addEventListener('change', toggleTenantIdField);
+        // Initial call to set correct visibility on load
+        document.addEventListener('DOMContentLoaded', toggleTenantIdField);
+
+        // Function to display messages to the user
+        function showMessage(message, type = 'info') {
+            messageBox.textContent = message;
+            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
+            if (type === 'error') {
+                messageBox.classList.add('bg-red-100', 'text-red-700');
+            } else if (type === 'success') {
+                messageBox.classList.add('bg-green-100', 'text-green-700');
+            } else {
+                messageBox.classList.add('bg-blue-100', 'text-blue-700');
+            }
+            setTimeout(() => {
+                messageBox.classList.add('hidden');
+            }, 3000); // Hide message after 3 seconds
+        }
+
+        // Function to generate the Entra sign-in URL
+        function generateUrl(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            // Base URL construction
+            let baseUrl = '';
+            const tenantId = tenantIdInput.value.trim();
+            switch (baseUrlType.value) {
+                case 'specific':
+                    if (!tenantId) {
+                        showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
+                        return;
+                    }
+                    baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
+                    break;
+                case 'common':
+                    baseUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`;
+                    break;
+                case 'consumers':
+                    baseUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize`;
+                    break;
+                case 'organizations':
+                    baseUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize`;
+                    break;
+            }
+
+            // Get essential parameters
+            const clientId = clientIdInput.value.trim();
+            const redirectUri = redirectUriInput.value.trim();
+            const scope = scopeInput.value.trim();
+            const responseType = responseTypeSelect.value;
+
+            // Validate required fields
+            if (!clientId || !redirectUri || !scope) {
+                showMessage('Client ID, Redirect URI, and Scope are required fields.', 'error');
+                return;
+            }
+
+            // Construct query parameters
+            const params = new URLSearchParams();
+            params.append('client_id', clientId);
+            params.append('response_type', responseType);
+            params.append('redirect_uri', redirectUri);
+            params.append('scope', scope);
+
+            // Add optional parameters if they have values
+            if (stateInput.value.trim()) {
+                params.append('state', stateInput.value.trim());
+            }
+            if (nonceInput.value.trim()) {
+                params.append('nonce', nonceInput.value.trim());
+            }
+            if (responseModeSelect.value) {
+                params.append('response_mode', responseModeSelect.value);
+            }
+            if (promptSelect.value) {
+                params.append('prompt', promptSelect.value);
+            }
+            if (loginHintInput.value.trim()) {
+                params.append('login_hint', loginHintInput.value.trim());
+            }
+            if (domainHintInput.value.trim()) {
+                params.append('domain_hint', domainHintInput.value.trim());
+            }
+
+            // Combine base URL and parameters
+            const fullUrl = `${baseUrl}?${params.toString()}`;
+            generatedUrlTextarea.value = fullUrl;
+            showMessage('URL generated successfully!', 'success');
+        }
+
+        // Function to copy the generated URL to clipboard
+        function copyUrlToClipboard() {
+            if (generatedUrlTextarea.value) {
+                // Use document.execCommand('copy') as navigator.clipboard.writeText() may not work in some iframe environments
+                generatedUrlTextarea.select();
+                document.execCommand('copy');
+                showMessage('URL copied to clipboard!', 'success');
+            } else {
+                showMessage('No URL to copy. Please generate one first.', 'info');
+            }
+        }
+
+        // Function to clear all form fields
+        function clearForm() {
+            urlForm.reset(); // Resets all form fields to their initial state
+            generatedUrlTextarea.value = ''; // Clear the generated URL
+            toggleTenantIdField(); // Reset tenant ID field visibility
+            showMessage('Form cleared.', 'info');
+        }
+
+        // Event listeners
+        urlForm.addEventListener('submit', generateUrl);
+        copyUrlButton.addEventListener('click', copyUrlToClipboard);
+        clearFormButton.addEventListener('click', clearForm);
+
+        // Generate a random state and nonce on load for convenience
+        function generateRandomString(length) {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0987654321';
+            let result = '';
+            for (let i = 0; i < length; i++) {
+                result += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            return result;
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            stateInput.value = generateRandomString(32);
+            nonceInput.value = generateRandomString(32);
+        });
+
+    </script>
+</body>
+</html>

@@ -287,6 +287,64 @@
         .tab-content.active {
             display: block;
         }
+        
+        /* Permission Modal Styles */
+        #permissionModal {
+            -webkit-backdrop-filter: blur(4px);
+            backdrop-filter: blur(4px);
+        }
+        
+        .permission-item {
+            padding: 0.5rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.375rem;
+            cursor: pointer;
+            transition: all 0.15s ease-in-out;
+            background: white;
+        }
+        
+        .permission-item:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .permission-item.selected {
+            border-color: #10b981;
+            background-color: #ecfdf5;
+        }
+        
+        .permission-title {
+            font-weight: 600;
+            color: #1f2937;
+            margin-bottom: 0.125rem;
+            font-size: 0.875rem;
+        }
+        
+        .permission-description {
+            font-size: 0.75rem;
+            color: #6b7280;
+            line-height: 1.3;
+        }
+        
+        /* Scrollbar styles for modal */
+        #modalPermissionsList::-webkit-scrollbar {
+            width: 6px;
+        }
+        
+        #modalPermissionsList::-webkit-scrollbar-track {
+            background: #f1f1f1;
+        }
+        
+        #modalPermissionsList::-webkit-scrollbar-thumb {
+            background: #c1c1c1;
+            border-radius: 3px;
+        }
+        
+        #modalPermissionsList::-webkit-scrollbar-thumb:hover {
+            background: #a1a1a1;
+        }
     </style>
 </head>
 <body>
@@ -389,7 +447,13 @@
                                 Scope (space-separated) 
                                 <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" id="scope" class="input" value="openid profile email offline_access https://graph.microsoft.com/User.Read" placeholder="Required">
+                            <div class="space-y-2">
+                                <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)">openid profile email offline_access https://graph.microsoft.com/User.Read</textarea>
+                                <button type="button" id="addGraphPermissionBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    Add Graph Permission
+                                </button>
+                            </div>
                             <p class="text-xs text-gray-500" id="scopeHelp">Permissions your app requests. Include 'openid' for OIDC, 'profile' for user info, 'email' for email claims, 'offline_access' for refresh tokens, plus any API scopes</p>
                         </div>
                         
@@ -562,6 +626,44 @@
 
     </div>
 
+    <!-- Graph Permission Selector Modal -->
+    <div id="permissionModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Add Graph Permission</h3>
+                <button type="button" id="closeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close permission selector">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Search Section -->
+            <div class="p-4 border-b border-gray-200">
+                <div class="relative">
+                    <i data-lucide="search" class="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400"></i>
+                    <input type="text" id="permissionSearch" class="input pl-10" placeholder="Search permissions (e.g., User.Read, Mail.Send)">
+                </div>
+            </div>
+            
+            <!-- Permissions List -->
+            <div class="flex-1 overflow-y-auto p-4">
+                <div id="modalPermissionsList" class="space-y-1">
+                    <!-- Permissions will be populated here -->
+                </div>
+                <div id="noPermissionsMsg" class="text-center text-gray-500 py-8 hidden">
+                    No permissions found matching your search.
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="cancelModalBtn" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Additional SEO Schema -->
     <script type="application/ld+json">
     {
@@ -595,6 +697,4871 @@
     </script>
 
     <script>
+        // Microsoft Graph Permissions Data (embedded) - Curated list of most commonly used permissions
+const GRAPH_PERMISSIONS = [
+  {
+    "name": "AccessReview.Read.All",
+    "description": "Read all access reviews that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AccessReview.ReadWrite.All",
+    "description": "Manage all access reviews that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AccessReview.ReadWrite.Membership",
+    "description": "Manage access reviews for group and app memberships",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Acronym.Read.All",
+    "description": "Read all acronyms that the user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AdministrativeUnit.Read.All",
+    "description": "Read administrative units",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AdministrativeUnit.ReadWrite.All",
+    "description": "Read and write administrative units",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Agreement.Read.All",
+    "description": "Read all terms of use agreements",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Agreement.ReadWrite.All",
+    "description": "Read and write all terms of use agreements",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AgreementAcceptance.Read.All",
+    "description": "Read terms of use acceptance statuses that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AiEnterpriseInteraction.Read.All",
+    "description": "Read all AI enterprise interactions.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "APIConnectors.Read.All",
+    "description": "Read API connectors for authentication flows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "APIConnectors.ReadWrite.All",
+    "description": "Read and write API connectors for authentication flows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppCatalog.Read.All",
+    "description": "Read all app catalogs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppCatalog.ReadWrite.All",
+    "description": "Read and write to all app catalogs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Application-RemoteDesktopConfig.ReadWrite.All",
+    "description": "Read and write the remote desktop security configuration for apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Application.Read.All",
+    "description": "Read applications",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Application.ReadWrite.All",
+    "description": "Read and write all applications",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Application.ReadWrite.OwnedBy",
+    "description": "Manage apps that this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppRoleAssignment.ReadWrite.All",
+    "description": "Manage app permission grants and app role assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ApprovalSolution.Read.All",
+    "description": "Read all approvals",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ApprovalSolution.ReadWrite.All",
+    "description": "Read all approvals and manage approval subscriptions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AttackSimulation.Read.All",
+    "description": "Read attack simulation data of an organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AttackSimulation.ReadWrite.All",
+    "description": "Read, create, and update attack simulation data of an organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditActivity.Read",
+    "description": "Read activity audit log from the audit store.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditActivity.Write",
+    "description": "Upload activity audit logs to the audit store.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLog.Read.All",
+    "description": "Read audit log data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-CRM.Read.All",
+    "description": "Read audit logs data from Dynamics CRM workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-Endpoint.Read.All",
+    "description": "Read audit logs data from Endpoint Data Loss Prevention workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-Entra.Read.All",
+    "description": "Read audit logs data from Entra (Azure AD) workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-Exchange.Read.All",
+    "description": "Read audit logs data from Exchange workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-OneDrive.Read.All",
+    "description": "Read audit logs data from OneDrive workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery-SharePoint.Read.All",
+    "description": "Read audit logs data from SharePoint workload",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuditLogsQuery.Read.All",
+    "description": "Read audit logs data from all services",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuthenticationContext.Read.All",
+    "description": "Read all authentication context information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AuthenticationContext.ReadWrite.All",
+    "description": "Read and write all authentication context information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Configuration.Read.All",
+    "description": "Read backup configuration policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Configuration.ReadWrite.All",
+    "description": "Read and edit backup configuration policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Control.Read.All",
+    "description": "Read the status of the M365 backup service",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Control.ReadWrite.All",
+    "description": "Update or read the status of the M365 backup service",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Monitor.Read.All",
+    "description": "Read monitoring, quota and billing information for the tenant",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Restore.Read.All",
+    "description": "Read restore sessions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Restore.ReadWrite.All",
+    "description": "Read restore sessions and start restore sessions from backups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BackupRestore-Search.Read.All",
+    "description": "Search for metadata properties in backup snapshots",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BillingConfiguration.ReadWrite.All",
+    "description": "Read and write application billing configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BitlockerKey.Read.All",
+    "description": "Read BitLocker keys",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BitlockerKey.ReadBasic.All",
+    "description": "Read BitLocker keys basic information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Bookings.Manage.All",
+    "description": "Manage bookings information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Bookings.Read.All",
+    "description": "Read bookings information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Bookings.ReadWrite.All",
+    "description": "Read and write bookings information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BookingsAppointment.ReadWrite.All",
+    "description": "Read and write booking appointments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Bookmark.Read.All",
+    "description": "Read all bookmarks that the user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BrowserSiteLists.Read.All",
+    "description": "Read browser site lists for your organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BrowserSiteLists.ReadWrite.All",
+    "description": "Read and write browser site lists for your organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioConfig.Read.OwnedBy",
+    "description": "Read business scenario configurations this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioConfig.ReadWrite.OwnedBy",
+    "description": "Read and write business scenario configurations this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioData.Read.OwnedBy",
+    "description": "Read all data for business scenarios this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioData.ReadWrite.OwnedBy",
+    "description": "Read and write all data for business scenarios this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.Read",
+    "description": "Read user calendars",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.ReadBasic.All",
+    "description": "Read basic details of calendars in all mailboxes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.ReadWrite",
+    "description": "Have full access to user calendars",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallDelegation.Read.All",
+    "description": "Read delegation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallDelegation.ReadWrite.All",
+    "description": "Read and write delegation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallEvents-Emergency.Read.All",
+    "description": "Read all emergency call events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallEvents.Read.All",
+    "description": "Read all call events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallRecord-PstnCalls.Read.All",
+    "description": "Read PSTN and direct routing call log data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallRecords.Read.All",
+    "description": "Read all call records",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.AccessMedia.All",
+    "description": "Access media streams in a call as an app",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.Initiate.All",
+    "description": "Initiate outgoing 1 to 1 calls from the app",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.InitiateGroupCall.All",
+    "description": "Initiate outgoing group calls from the app",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.JoinGroupCall.All",
+    "description": "Join group calls and meetings as an app",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.JoinGroupCallAsGuest.All",
+    "description": "Join group calls and meetings as a guest",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChangeManagement.Read.All",
+    "description": "Read Change Management items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Channel.Create",
+    "description": "Create channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Channel.Delete.All",
+    "description": "Delete channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Channel.ReadBasic.All",
+    "description": "Read the names and descriptions of channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMember.Read.All",
+    "description": "Read the members of channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMember.ReadWrite.All",
+    "description": "Add and remove members from channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.Read.All",
+    "description": "Read user channel messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.UpdatePolicyViolation.All",
+    "description": "Flag channel messages for violating policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelSettings.Read.All",
+    "description": "Read the names, descriptions, and settings of channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelSettings.ReadWrite.All",
+    "description": "Read and write the names, descriptions, and settings of channels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.Create",
+    "description": "Create chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ManageDeletion.All",
+    "description": "Delete and recover deleted chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.Read.All",
+    "description": "Read all chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.Read.WhereInstalled",
+    "description": "Read all chat messages for chats where the associated Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadBasic.All",
+    "description": "Read names and members of all chat threads",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadBasic.WhereInstalled",
+    "description": "Read names and members of all chat threads where the associated Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadWrite.All",
+    "description": "Read and write all chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadWrite.WhereInstalled",
+    "description": "Read and write all chat messages for chats where the associated Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.UpdatePolicyViolation.All",
+    "description": "Flag chat messages for violating policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.Read.All",
+    "description": "Read the members of all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.Read.WhereInstalled",
+    "description": "Read the members of all chats where the associated Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.ReadWrite.All",
+    "description": "Add and remove members from all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.ReadWrite.WhereInstalled",
+    "description": "Add and remove members from all chats where the associated Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMessage.Read.All",
+    "description": "Read all chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CloudApp-Discovery.Read.All",
+    "description": "Read discovered cloud applications data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CloudPC.Read.All",
+    "description": "Read Cloud PCs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CloudPC.ReadWrite.All",
+    "description": "Read and write Cloud PCs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Community.Read.All",
+    "description": "Read all Viva Engage communities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Community.ReadWrite.All",
+    "description": "Read and write all Viva Engage communities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConfigurationMonitoring.Read.All",
+    "description": "Read all Configuration Monitoring entities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConfigurationMonitoring.ReadWrite.All",
+    "description": "Read and write all Configuration Monitoring entities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConsentRequest.Read.All",
+    "description": "Read consent requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConsentRequest.ReadWrite.All",
+    "description": "Read and write consent requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Contacts.Read",
+    "description": "Read user contacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Contacts.ReadWrite",
+    "description": "Have full access to user contacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Content.Process.All",
+    "description": "Process content for data security, governance and compliance",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Content.Process.User",
+    "description": "Process content for data security, governance and compliance",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ContentActivity.Read",
+    "description": "Read contents activity audit log from the audit store.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ContentActivity.Write",
+    "description": "Upload contents activity audit logs to the audit store.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CrossTenantInformation.ReadBasic.All",
+    "description": "Read cross-tenant basic information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CrossTenantUserProfileSharing.Read.All",
+    "description": "Read all shared cross-tenant user profiles and export their data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CrossTenantUserProfileSharing.ReadWrite.All",
+    "description": "Read all shared cross-tenant user profiles and export or delete their data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomAuthenticationExtension.Read.All",
+    "description": "Read your organization's custom authentication extensions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomAuthenticationExtension.ReadWrite.All",
+    "description": "Read and write your organization's custom authentication extensions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomAuthenticationExtension.Receive.Payload",
+    "description": "Receive custom authentication extension HTTP requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomDetection.Read.All",
+    "description": "Read custom detection rules",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomDetection.ReadWrite.All",
+    "description": "Read and write custom detection rules",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeAssignment.Read.All",
+    "description": "Read custom security attribute assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeAssignment.ReadWrite.All",
+    "description": "Read and write custom security attribute assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeAuditLogs.Read.All",
+    "description": "Read custom security attribute audit logs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeDefinition.Read.All",
+    "description": "Read custom security attribute definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeDefinition.ReadWrite.All",
+    "description": "Read and write custom security attribute definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeProvisioning.Read.All",
+    "description": "Read the provisioning configuration of all active custom security attributes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomSecAttributeProvisioning.ReadWrite.All",
+    "description": "Read and edit the provisioning configuration of all active custom security attributes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomTags.Read.All",
+    "description": "Read all custom tags data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CustomTags.ReadWrite.All",
+    "description": "Read and write custom tags data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DelegatedAdminRelationship.Read.All",
+    "description": "Read Delegated Admin relationships with customers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DelegatedAdminRelationship.ReadWrite.All",
+    "description": "Manage Delegated Admin relationships with customers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DelegatedPermissionGrant.Read.All",
+    "description": "Read delegated permission grants",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DelegatedPermissionGrant.ReadWrite.All",
+    "description": "Manage all delegated permission grants",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Device.Read.All",
+    "description": "Read all devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Device.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceLocalCredential.Read.All",
+    "description": "Read device local credential passwords",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceLocalCredential.ReadBasic.All",
+    "description": "Read device local credential properties",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementApps.Read.All",
+    "description": "Read Microsoft Intune apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementApps.ReadWrite.All",
+    "description": "Read and write Microsoft Intune apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementCloudCA.Read.All",
+    "description": "Read Microsoft Cloud PKI objects",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementCloudCA.ReadWrite.All",
+    "description": "Read and write Microsoft Cloud PKI objects",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementConfiguration.Read.All",
+    "description": "Read Microsoft Intune Device Configuration and Policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementConfiguration.ReadWrite.All",
+    "description": "Read and write Microsoft Intune Device Configuration and Policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementManagedDevices.PrivilegedOperations.All",
+    "description": "Perform user-impacting remote actions on Microsoft Intune devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementManagedDevices.Read.All",
+    "description": "Read Microsoft Intune devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementManagedDevices.ReadWrite.All",
+    "description": "Read and write Microsoft Intune devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementRBAC.Read.All",
+    "description": "Read Microsoft Intune RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementRBAC.ReadWrite.All",
+    "description": "Read and write Microsoft Intune RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementScripts.Read.All",
+    "description": "Read Microsoft Intune Scripts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementScripts.ReadWrite.All",
+    "description": "Read and write Microsoft Intune Scripts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementServiceConfig.Read.All",
+    "description": "Read Microsoft Intune configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementServiceConfig.ReadWrite.All",
+    "description": "Read and write Microsoft Intune configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceTemplate.Create",
+    "description": "Create device templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceTemplate.Read.All",
+    "description": "Read all device templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceTemplate.ReadWrite.All",
+    "description": "Read and write all device templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Directory.Read.All",
+    "description": "Read directory data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Directory.ReadWrite.All",
+    "description": "Read and write directory data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DirectoryRecommendations.Read.All",
+    "description": "Read Azure AD recommendations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DirectoryRecommendations.ReadWrite.All",
+    "description": "Read and update Azure AD recommendations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Domain.Read.All",
+    "description": "Read domains.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Domain.ReadWrite.All",
+    "description": "Read and write domains",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "eDiscovery.Read.All",
+    "description": "Read all eDiscovery objects",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "eDiscovery.ReadWrite.All",
+    "description": "Read and write all eDiscovery objects",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAdministration.Read.All",
+    "description": "Read Education app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAdministration.ReadWrite.All",
+    "description": "Manage education app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.Read.All",
+    "description": "Read all class assignments with grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadBasic.All",
+    "description": "Read all class assignments without grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadWrite.All",
+    "description": "Create, read, update and delete all class assignments with grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadWriteBasic.All",
+    "description": "Create, read, update and delete all class assignments without grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduCurricula.Read.All",
+    "description": "Read all class modules and resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduCurricula.ReadWrite.All",
+    "description": "Read and write all class modules and resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduReports-Reading.Read.All",
+    "description": "Read all tenant reading assignments submissions data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduReports-Reading.ReadAnonymous.All",
+    "description": "Read all tenant reading assignments submissions data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduReports-Reflect.Read.All",
+    "description": "Read all tenant reflect check-ins submissions data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduReports-Reflect.ReadAnonymous.All",
+    "description": "Read all tenant reflect check-ins submissions data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.Read.All",
+    "description": "Read the organization's roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.ReadBasic.All",
+    "description": "Read a limited subset of the organization's roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.ReadWrite.All",
+    "description": "Read and write the organization's roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EngagementConversation.Migration.All",
+    "description": "Read and write all Viva Engage conversations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EngagementMeetingConversation.Read.All",
+    "description": "Read all Viva Engage Teams QA conversations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EngagementRole.Read.All",
+    "description": "Read all Viva Engage roles and role memberships",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EngagementRole.ReadWrite.All",
+    "description": "Modify Viva Engage role membership",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EntitlementManagement.Read.All",
+    "description": "Read all entitlement management resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EntitlementManagement.ReadWrite.All",
+    "description": "Read and write entitlement management resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EventListener.Read.All",
+    "description": "Read your organization's authentication event listeners",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EventListener.ReadWrite.All",
+    "description": "Read and write your organization's authentication event listeners",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalConnection.Read.All",
+    "description": "Read all external connections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalConnection.ReadWrite.All",
+    "description": "Read and write all external connections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalConnection.ReadWrite.OwnedBy",
+    "description": "Read and write external connections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalItem.Read.All",
+    "description": "Read items in external datasets",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalItem.ReadWrite.All",
+    "description": "Read and write all external items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalItem.ReadWrite.OwnedBy",
+    "description": "Read and write external items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalUserProfile.Read.All",
+    "description": "Read external user profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ExternalUserProfile.ReadWrite.All",
+    "description": "Read and write external user profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "FileIngestion.Ingest",
+    "description": "Ingest SharePoint and OneDrive content to make it available in the search index",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "FileIngestionHybridOnboarding.Manage",
+    "description": "Manage onboarding for a Hybrid Cloud tenant",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.Read.All",
+    "description": "Read all files that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.ReadWrite.All",
+    "description": "Have full access to all files user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.ReadWrite.AppFolder",
+    "description": "Have full access to the application's folder (preview)",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.SelectedOperations.Selected",
+    "description": "Access selected Files, on behalf of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "FileStorageContainer.Selected",
+    "description": "Access selected file storage containers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group-Conversation.Read.All",
+    "description": "Read group conversations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group-Conversation.ReadWrite.All",
+    "description": "Read and write group conversations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group.Create",
+    "description": "Create groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group.Read.All",
+    "description": "Read all groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group.ReadWrite.All",
+    "description": "Read and write all groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "GroupMember.Read.All",
+    "description": "Read group memberships",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "GroupMember.ReadWrite.All",
+    "description": "Read and write group memberships",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "GroupSettings.Read.All",
+    "description": "Read all group settings that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "GroupSettings.ReadWrite.All",
+    "description": "Read and write all group settings that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "HealthMonitoringAlert.Read.All",
+    "description": "Read all scenario health monitoring alerts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "HealthMonitoringAlert.ReadWrite.All",
+    "description": "Read and write all scenario monitoring alerts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "HealthMonitoringAlertConfig.Read.All",
+    "description": "Read all scenario health monitoring alert configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "HealthMonitoringAlertConfig.ReadWrite.All",
+    "description": "Read and write all scenario monitoring alert configurations.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityProvider.Read.All",
+    "description": "Read identity providers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityProvider.ReadWrite.All",
+    "description": "Read and write identity providers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskEvent.Read.All",
+    "description": "Read identity risk event information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskEvent.ReadWrite.All",
+    "description": "Read and write risk event information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskyServicePrincipal.Read.All",
+    "description": "Read all identity risky service principal information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskyServicePrincipal.ReadWrite.All",
+    "description": "Read and write all identity risky service principal information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskyUser.Read.All",
+    "description": "Read identity risky user information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityRiskyUser.ReadWrite.All",
+    "description": "Read and write risky user information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityUserFlow.Read.All",
+    "description": "Read all identity user flows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IdentityUserFlow.ReadWrite.All",
+    "description": "Read and write all identity user flows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-DataConnector.Read.All",
+    "description": "View data connector definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-DataConnector.ReadWrite.All",
+    "description": "Manage data connector definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-DataConnector.Upload",
+    "description": "Upload files to a data connector",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-InboundFlow.Read.All",
+    "description": "View inbound flow definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-InboundFlow.ReadWrite.All",
+    "description": "Manage inbound flow definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-OutboundFlow.Read.All",
+    "description": "View outbound flow definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-OutboundFlow.ReadWrite.All",
+    "description": "Manage outbound flow definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-ReferenceDefinition.Read.All",
+    "description": "View reference definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-ReferenceDefinition.ReadWrite.All",
+    "description": "Manage reference definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-Run.Read.All",
+    "description": "View current and previous runs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-Run.Start",
+    "description": "View and start runs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-SourceSystem.Read.All",
+    "description": "View source system definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-SourceSystem.ReadWrite.All",
+    "description": "Manage source system definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-TimePeriod.Read.All",
+    "description": "Read time period definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData-TimePeriod.ReadWrite.All",
+    "description": "Manage time period definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IndustryData.ReadBasic.All",
+    "description": "Read basic Industry Data service and resource definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionConfig.Read.All",
+    "description": "Read all configurations for protecting organizational data applicable to users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionContent.Sign.All",
+    "description": "Sign digests for data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionContent.Write.All",
+    "description": "Create protected content",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionPolicy.Read.All",
+    "description": "Read all published labels and label policies for an organization.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Insights-UserMetric.Read.All",
+    "description": "Read user metrics insights",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningAssignedCourse.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningAssignedCourse.ReadWrite.All",
+    "description": "Read and write all assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningContent.Read.All",
+    "description": "Read learning content",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningContent.ReadWrite.All",
+    "description": "Manage learning content",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningSelfInitiatedCourse.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningSelfInitiatedCourse.ReadWrite.All",
+    "description": "Read and write all self-initiated courses",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LicenseAssignment.Read.All",
+    "description": "Read all license assignments.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LicenseAssignment.ReadWrite.All",
+    "description": "Manage all license assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-CustomExt.Read.All",
+    "description": "Read all Lifecycle workflows custom task extensions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-CustomExt.ReadWrite.All",
+    "description": "Read and write all Lifecycle workflows custom task extensions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-Reports.Read.All",
+    "description": "Read all Lifecycle workflows reports",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-Workflow.Activate",
+    "description": "Run workflows on-demand in Lifecycle workflows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-Workflow.Read.All",
+    "description": "Read all workflows in Lifecycle workflows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-Workflow.ReadBasic.All",
+    "description": "List all workflows in Lifecycle workflows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows-Workflow.ReadWrite.All",
+    "description": "Read and write all workflows in Lifecycle workflows",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows.Read.All",
+    "description": "Read all lifecycle workflows resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LifecycleWorkflows.ReadWrite.All",
+    "description": "Read and write all lifecycle workflows resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ListItems.SelectedOperations.Selected",
+    "description": "Access selected ListItems, on behalf of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Lists.SelectedOperations.Selected",
+    "description": "Access selected Lists, on behalf of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.Read",
+    "description": "Read user mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.ReadBasic",
+    "description": "Read user basic mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.ReadBasic.All",
+    "description": "Read basic mail in all mailboxes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.ReadWrite",
+    "description": "Read and write access to user mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.Send",
+    "description": "Send mail as a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxFolder.Read.All",
+    "description": "Read all the users' mailbox folders",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxFolder.ReadWrite.All",
+    "description": "Read and write all the users' mailbox folders",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxItem.ImportExport.All",
+    "description": "Allows the app to perform backup and restore for all mailbox items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxItem.Read.All",
+    "description": "Read all the users' mailbox items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxSettings.Read",
+    "description": "Read user mailbox settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxSettings.ReadWrite",
+    "description": "Read and write user mailbox settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Member.Read.Hidden",
+    "description": "Read hidden memberships",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MultiTenantOrganization.Read.All",
+    "description": "Read multi-tenant organization details and tenants",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MultiTenantOrganization.ReadBasic.All",
+    "description": "Read multi-tenant organization basic details and active tenants",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MultiTenantOrganization.ReadWrite.All",
+    "description": "Read and write multi-tenant organization details and tenants",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MutualTlsOauthConfiguration.Read.All",
+    "description": "Read all configurations used for mutual-TLS client authentication.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MutualTlsOauthConfiguration.ReadWrite.All",
+    "description": "Read and write all configurations used for mutual-TLS client authentication.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccess-Reports.Read.All",
+    "description": "Read all network access reports",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccess.Read.All",
+    "description": "Read all network access information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccess.ReadWrite.All",
+    "description": "Read and write all network access information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccessBranch.Read.All",
+    "description": "Read properties of branches for network access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccessBranch.ReadWrite.All",
+    "description": "Read and write properties of branches for network access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccessPolicy.Read.All",
+    "description": "Read security and routing policies for network access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "NetworkAccessPolicy.ReadWrite.All",
+    "description": "Read and write security and routing policies for network access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.Read.All",
+    "description": "Read all OneNote notebooks that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.ReadWrite.All",
+    "description": "Read and write all OneNote notebooks that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingAiInsight.Read.All",
+    "description": "Read all AI Insights for online meetings.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingAiInsight.Read.Chat",
+    "description": "Read all AI Insights for online meetings where the Teams application is installed.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingArtifact.Read.All",
+    "description": "Read user's online meeting artifacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingRecording.Read.All",
+    "description": "Read all recordings of online meetings.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetings.Read.All",
+    "description": "Read online meeting details",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetings.ReadWrite.All",
+    "description": "Read and create online meetings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingTranscript.Read.All",
+    "description": "Read all transcripts of online meetings.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnPremDirectorySynchronization.Read.All",
+    "description": "Read all on-premises directory synchronization information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnPremDirectorySynchronization.ReadWrite.All",
+    "description": "Read and write all on-premises directory synchronization information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnPremisesPublishingProfiles.ReadWrite.All",
+    "description": "Manage on-premises published resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Organization.Read.All",
+    "description": "Read organization information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Organization.ReadWrite.All",
+    "description": "Read and write organization information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrganizationalBranding.Read.All",
+    "description": "Read organizational branding information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrganizationalBranding.ReadWrite.All",
+    "description": "Read and write organizational branding information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgContact.Read.All",
+    "description": "Read organizational contacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-AppsAndServices.Read.All",
+    "description": "Read organization-wide apps and services settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-AppsAndServices.ReadWrite.All",
+    "description": "Read and write organization-wide apps and services settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-DynamicsVoice.Read.All",
+    "description": "Read organization-wide Dynamics customer voice settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-DynamicsVoice.ReadWrite.All",
+    "description": "Read and write organization-wide Dynamics customer voice settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Forms.Read.All",
+    "description": "Read organization-wide Microsoft Forms settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Forms.ReadWrite.All",
+    "description": "Read and write organization-wide Microsoft Forms settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Microsoft365Install.Read.All",
+    "description": "Read organization-wide Microsoft 365 apps installation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Microsoft365Install.ReadWrite.All",
+    "description": "Read and write organization-wide Microsoft 365 apps installation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Todo.Read.All",
+    "description": "Read organization-wide Microsoft To Do settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-Todo.ReadWrite.All",
+    "description": "Read and write organization-wide Microsoft To Do settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PartnerBilling.Read.All",
+    "description": "Read all billing data for your company's tenant",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PartnerSecurity.Read.All",
+    "description": "Read security alerts of customer with CSP relationship",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PartnerSecurity.ReadWrite.All",
+    "description": "Read security alerts and update status of security alerts of customer with CSP relationship",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PendingExternalUserProfile.Read.All",
+    "description": "Read pending external user profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PendingExternalUserProfile.ReadWrite.All",
+    "description": "Read and write pending external user profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "People.Read.All",
+    "description": "Read all users' relevant people lists",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PeopleSettings.Read.All",
+    "description": "Read tenant-wide people settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PeopleSettings.ReadWrite.All",
+    "description": "Read and write tenant-wide people settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Place.Read.All",
+    "description": "Read all company places",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PlaceDevice.Read.All",
+    "description": "Read all workplace devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PlaceDevice.ReadWrite.All",
+    "description": "Read and write all workplace devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PlaceDeviceTelemetry.ReadWrite.All",
+    "description": "Read and write telemetry for all workplace devices.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.All",
+    "description": "Read your organization's policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.AuthenticationMethod",
+    "description": "Read authentication method policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.ConditionalAccess",
+    "description": "Read your organization's conditional access policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.DeviceConfiguration",
+    "description": "Read your organization's device configuration policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.IdentityProtection",
+    "description": "Read your organization’s identity protection policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.PermissionGrant",
+    "description": "Read consent and permission grant policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.AccessReview",
+    "description": "Read and write your organization's directory access review default policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.ApplicationConfiguration",
+    "description": "Read and write your organization's application configuration policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.AuthenticationFlows",
+    "description": "Read and write authentication flow policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.AuthenticationMethod",
+    "description": "Read and write authentication method policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.Authorization",
+    "description": "Read and write your organization's authorization policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.ConditionalAccess",
+    "description": "Read and write your organization's conditional access policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.ConsentRequest",
+    "description": "Read and write consent request policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.CrossTenantAccess",
+    "description": "Read and write your organization's cross tenant access policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.CrossTenantCapability",
+    "description": "Read and write your organization's M365 cross tenant access capabilities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.DeviceConfiguration",
+    "description": "Read and write your organization's device configuration policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.ExternalIdentities",
+    "description": "Read and write your organization's external identities policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.FeatureRollout",
+    "description": "Read and write your organization's feature rollout policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.FedTokenValidation",
+    "description": "Read and write your organization's federated token validation policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.IdentityProtection",
+    "description": "Read and write your organization’s identity protection policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.PermissionGrant",
+    "description": "Manage consent and permission grant policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.SecurityDefaults",
+    "description": "Read and write your organization's security defaults policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.TrustFramework",
+    "description": "Read and write your organization's trust framework policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Presence.Read.All",
+    "description": "Read presence information of all users in your organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Presence.ReadWrite.All",
+    "description": "Read and write presence information for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Printer.Read.All",
+    "description": "Read printers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Printer.ReadWrite.All",
+    "description": "Read and update printers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.Manage.All",
+    "description": "Perform advanced operations on print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.Read.All",
+    "description": "Read print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadBasic.All",
+    "description": "Read basic information of print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadWrite.All",
+    "description": "Read and write print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadWriteBasic.All",
+    "description": "Read and write basic information of print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintSettings.Read.All",
+    "description": "Read tenant-wide print settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintTaskDefinition.ReadWrite.All",
+    "description": "Read, write and update print task definitions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.Read.AzureAD",
+    "description": "Read privileged access to Azure AD",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.Read.AzureADGroup",
+    "description": "Read privileged access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.Read.AzureResources",
+    "description": "Read privileged access to Azure resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.ReadWrite.AzureAD",
+    "description": "Read and write privileged access to Azure AD",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.ReadWrite.AzureADGroup",
+    "description": "Read and write privileged access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAccess.ReadWrite.AzureResources",
+    "description": "Read and write privileged access to Azure resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAssignmentSchedule.Read.AzureADGroup",
+    "description": "Read assignment schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAssignmentSchedule.ReadWrite.AzureADGroup",
+    "description": "Read, create, and delete assignment schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedAssignmentSchedule.Remove.AzureADGroup",
+    "description": "Delete assignment schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedEligibilitySchedule.Read.AzureADGroup",
+    "description": "Read eligibility schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedEligibilitySchedule.ReadWrite.AzureADGroup",
+    "description": "Read, create, and delete eligibility schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrivilegedEligibilitySchedule.Remove.AzureADGroup",
+    "description": "Delete eligibility schedules for access to Azure AD groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProfilePhoto.Read.All",
+    "description": "Read profile photo of a user or group",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProfilePhoto.ReadWrite.All",
+    "description": "Read and write profile photo of a user or group",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProgramControl.Read.All",
+    "description": "Read all programs that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProgramControl.ReadWrite.All",
+    "description": "Manage all programs that user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProtectionScopes.Compute.All",
+    "description": "Compute Purview policies at tenant scope",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProtectionScopes.Compute.User",
+    "description": "Compute Purview policies for an individual user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ProvisioningLog.Read.All",
+    "description": "Read provisioning log data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PublicKeyInfrastructure.Read.All",
+    "description": "Read certificate based authentication configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PublicKeyInfrastructure.ReadWrite.All",
+    "description": "Read and write certificate based authentication configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "QnA.Read.All",
+    "description": "Read all Questions and Answers that the user can access.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RecordsManagement.Read.All",
+    "description": "Read Records Management configuration, labels, and policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RecordsManagement.ReadWrite.All",
+    "description": "Read and write Records Management configuration, labels, and policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Reports.Read.All",
+    "description": "Read all usage reports",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ReportSettings.Read.All",
+    "description": "Read admin report settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ReportSettings.ReadWrite.All",
+    "description": "Read and write admin report settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForChat.All",
+    "description": "Read resource specific permissions granted on a chat",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForTeam.All",
+    "description": "Read resource specific permissions granted on a team",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForUser.All",
+    "description": "Read all resource specific permissions granted on user accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RiskPreventionProviders.Read.All",
+    "description": "Read all identity risk prevention providers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RiskPreventionProviders.ReadWrite.All",
+    "description": "Read and write all identity risk prevention providers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleAssignmentSchedule.Read.Directory",
+    "description": "Read all active role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleAssignmentSchedule.ReadWrite.Directory",
+    "description": "Read, update, and delete all active role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleAssignmentSchedule.Remove.Directory",
+    "description": "Delete all active role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleEligibilitySchedule.Read.Directory",
+    "description": "Read all eligible role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleEligibilitySchedule.ReadWrite.Directory",
+    "description": "Read, update, and delete  all eligible role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleEligibilitySchedule.Remove.Directory",
+    "description": "Delete all eligible role assignments for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.Read.All",
+    "description": "Read role management data for all RBAC providers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.Read.CloudPC",
+    "description": "Read Cloud PC RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.Read.Defender",
+    "description": "Read M365 Defender RBAC configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.Read.Directory",
+    "description": "Read directory RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.Read.Exchange",
+    "description": "Read Exchange Online RBAC configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.ReadWrite.CloudPC",
+    "description": "Read and write Cloud PC RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.ReadWrite.Defender",
+    "description": "Read M365 Defender RBAC configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.ReadWrite.Directory",
+    "description": "Read and write directory RBAC settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagement.ReadWrite.Exchange",
+    "description": "Read and write Exchange Online RBAC configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementAlert.Read.Directory",
+    "description": "Read all alert data for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementAlert.ReadWrite.Directory",
+    "description": "Read all alert data, configure alerts, and take actions on all alerts for your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementPolicy.Read.AzureADGroup",
+    "description": "Read all policies in PIM for Groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementPolicy.Read.Directory",
+    "description": "Read all policies for privileged role assignments of your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementPolicy.ReadWrite.AzureADGroup",
+    "description": "Read, update, and delete all policies in PIM for Groups",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "RoleManagementPolicy.ReadWrite.Directory",
+    "description": "Read, update, and delete all policies for privileged role assignments of your company's directory",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Schedule-WorkingTime.ReadWrite.All",
+    "description": "Trigger working time policies and read the working time status",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Schedule.Read.All",
+    "description": "Read user schedule items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Schedule.ReadWrite.All",
+    "description": "Read and write user schedule items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SchedulePermissions.ReadWrite.All",
+    "description": "Read/Write schedule permissions for a role.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SearchConfiguration.Read.All",
+    "description": "Read your organization's search configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SearchConfiguration.ReadWrite.All",
+    "description": "Read and write your organization's search configuration",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityActions.Read.All",
+    "description": "Read your organization's security actions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityActions.ReadWrite.All",
+    "description": "Read and update your organization's security actions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityAlert.Read.All",
+    "description": "Read all security alerts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityAlert.ReadWrite.All",
+    "description": "Read and write to all security alerts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityAnalyzedMessage.Read.All",
+    "description": "Read metadata and detection details for emails in your organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityAnalyzedMessage.ReadWrite.All",
+    "description": "Read metadata, detection details, and execute remediation actions on emails in your organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityEvents.Read.All",
+    "description": "Read your organization’s security events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityEvents.ReadWrite.All",
+    "description": "Read and update your organization’s security events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesHealth.Read.All",
+    "description": "Read identity security health issues",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesHealth.ReadWrite.All",
+    "description": "Read and write identity security health issues",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesSensors.Read.All",
+    "description": "Read identity security sensors",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesSensors.ReadWrite.All",
+    "description": "Read and write identity security sensors",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesUserActions.Read.All",
+    "description": "Read identity security available user actions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIdentitiesUserActions.ReadWrite.All",
+    "description": "Read and perform identity security available user actions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIncident.Read.All",
+    "description": "Read incidents",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SecurityIncident.ReadWrite.All",
+    "description": "Read and write to incidents",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SensitivityLabel.Evaluate",
+    "description": "Evaluate sensitivity labels",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SensitivityLabel.Evaluate.All",
+    "description": "Evaluate labels tenant scope.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SensitivityLabel.Read",
+    "description": "Get labels user scope.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SensitivityLabels.Read.All",
+    "description": "Get labels app scope.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceActivity-Exchange.Read.All",
+    "description": "Read all Exchange service activity",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceActivity-Microsoft365Web.Read.All",
+    "description": "Read all Microsoft 365 Web service activity",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceActivity-OneDrive.Read.All",
+    "description": "Read all One Drive service activity",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceActivity-Teams.Read.All",
+    "description": "Read all Teams service activity",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceHealth.Read.All",
+    "description": "Read service health",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceMessage.Read.All",
+    "description": "Read service announcement messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServicePrincipalEndpoint.Read.All",
+    "description": "Read service principal endpoints",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServicePrincipalEndpoint.ReadWrite.All",
+    "description": "Read and update service principal endpoints",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SharePointTenantSettings.Read.All",
+    "description": "Read SharePoint and OneDrive tenant settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SharePointTenantSettings.ReadWrite.All",
+    "description": "Read and change SharePoint and OneDrive tenant settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ShortNotes.Read.All",
+    "description": "Read all users' short notes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ShortNotes.ReadWrite.All",
+    "description": "Read, create, edit, and delete all users' short notes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.Archive.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.FullControl.All",
+    "description": "Have full control of all site collections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.Manage.All",
+    "description": "Create, edit, and delete items and lists in all site collections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.Read.All",
+    "description": "Read items in all site collections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.ReadWrite.All",
+    "description": "Edit or delete items in all site collections",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Sites.Selected",
+    "description": "Access selected Sites, on behalf of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SpiffeTrustDomain.Read.All",
+    "description": "Read SPIFFE trust domains and child resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SpiffeTrustDomain.ReadWrite.All",
+    "description": "Read and write SPIFFE trust domains and child resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Storyline.ReadWrite.All",
+    "description": "Read and write all Viva Engage storylines",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SubjectRightsRequest.Read.All",
+    "description": "Read subject rights requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SubjectRightsRequest.ReadWrite.All",
+    "description": "Read and write subject rights requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Synchronization.Read.All",
+    "description": "Read all Azure AD synchronization data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Synchronization.ReadWrite.All",
+    "description": "Read and write all Azure AD synchronization data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SynchronizationData-User.Upload",
+    "description": "Upload user data to the identity synchronization service",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SynchronizationData-User.Upload.OwnedBy",
+    "description": "Upload user data to the identity sync service for apps that this application creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.Read.All",
+    "description": "Read all users’ tasks and tasklist",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.ReadWrite.All",
+    "description": "Read and write all users’ tasks and tasklists",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Team.Create",
+    "description": "Create teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Team.ReadBasic.All",
+    "description": "Read the names and descriptions of teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamMember.Read.All",
+    "description": "Read the members of teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamMember.ReadWrite.All",
+    "description": "Add and remove members from teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamMember.ReadWriteNonOwnerRole.All",
+    "description": "Add and remove members with non-owner role for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Read.All",
+    "description": "Read all users' teamwork activity feed",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Send",
+    "description": "Send a teamwork activity as the user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForChat.All",
+    "description": "Manage installation and permission grants of selected Teams apps in all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForTeam.All",
+    "description": "Manage installation and permission grants of selected Teams apps in all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForUser.All",
+    "description": "Manage installation and permission grants of selected Teams apps for all user accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.Read.All",
+    "description": "Read installed Teams apps for all installation scopes",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForChat.All",
+    "description": "Read installed Teams apps for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForTeam.All",
+    "description": "Read installed Teams apps for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForUser.All",
+    "description": "Read installed Teams apps for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForChat.All",
+    "description": "Read selected installed Teams apps in all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForTeam.All",
+    "description": "Read selected installed Teams apps in all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForUser.All",
+    "description": "Read selected installed Teams apps for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForChat.All",
+    "description": "Manage installation and permission grants of Teams apps for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForTeam.All",
+    "description": "Manage installation and permission grants of Teams apps for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForUser.All",
+    "description": "Manage installation and permission grants of Teams apps in a user account",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForChat.All",
+    "description": "Allow the Teams app to manage itself and its permission grants for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForTeam.All",
+    "description": "Allow the Teams app to manage itself and its permission grants for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForUser.All",
+    "description": "Allow the Teams app to manage itself and its permission grants in all user accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForChat.All",
+    "description": "Manage Teams apps for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForTeam.All",
+    "description": "Manage Teams apps for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForUser.All",
+    "description": "Manage Teams apps for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForChat.All",
+    "description": "Manage selected installed Teams apps in all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForTeam.All",
+    "description": "Manage selected installed Teams apps in all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForUser.All",
+    "description": "Manage selected Teams apps installed for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForChat.All",
+    "description": "Allow the Teams app to manage itself for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForTeam.All",
+    "description": "Allow the Teams app to manage itself for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForUser.All",
+    "description": "Allow the app to manage itself for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamSettings.Read.All",
+    "description": "Read teams' settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamSettings.ReadWrite.All",
+    "description": "Read and change teams' settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsPolicyUserAssign.ReadWrite.All",
+    "description": "Read and Write Teams policy user assignment and unassigment for all policy types.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsResourceAccount.Read.All",
+    "description": "Read Teams resource accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Create",
+    "description": "Create tabs in Microsoft Teams.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Read.All",
+    "description": "Read tabs in Microsoft Teams.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWrite.All",
+    "description": "Read and write tabs in Microsoft Teams.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForChat.All",
+    "description": "Allow the Teams app to manage all tabs for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForTeam.All",
+    "description": "Allow the Teams app to manage all tabs for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForUser.All",
+    "description": "Allow the app to manage all tabs for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForChat.All",
+    "description": "Allow the Teams app to manage only its own tabs for all chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForTeam.All",
+    "description": "Allow the Teams app to manage only its own tabs for all teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForUser.All",
+    "description": "Allow the Teams app to manage only its own tabs for all users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTelephoneNumber.Read.All",
+    "description": "Read Tenant-Acquired Telephone Number Details",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTelephoneNumber.ReadWrite.All",
+    "description": "Read and Modify Tenant-Acquired Telephone Number Details",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsUserConfiguration.Read.All",
+    "description": "Read Teams user configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamTemplates.Read.All",
+    "description": "Read all available Teams Templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Teamwork.Migrate.All",
+    "description": "Create chat and channel messages with anyone's identity and with any timestamp",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Teamwork.Read.All",
+    "description": "Read organizational teamwork settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkAppSettings.Read.All",
+    "description": "Read Teams app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkAppSettings.ReadWrite.All",
+    "description": "Read and write Teams app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkDevice.Read.All",
+    "description": "Read Teams devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkDevice.ReadWrite.All",
+    "description": "Read and write Teams devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkTag.Read.All",
+    "description": "Read tags in Teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkTag.ReadWrite.All",
+    "description": "Read and write tags in Teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TermStore.Read.All",
+    "description": "Read term store data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TermStore.ReadWrite.All",
+    "description": "Read and write term store data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatAssessment.Read.All",
+    "description": "Read threat assessment requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatHunting.Read.All",
+    "description": "Run hunting queries",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatIndicators.Read.All",
+    "description": "Read all threat indicators",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatIndicators.ReadWrite.OwnedBy",
+    "description": "Manage threat indicators this app creates or owns",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatIntelligence.Read.All",
+    "description": "Read all threat intelligence information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmission.Read.All",
+    "description": "Read all threat submissions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmission.ReadWrite.All",
+    "description": "Read and write all threat submissions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmissionPolicy.ReadWrite.All",
+    "description": "Read and write all threat submission policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TrustFrameworkKeySet.Read.All",
+    "description": "Read trust framework key sets",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TrustFrameworkKeySet.ReadWrite.All",
+    "description": "Read and write trust framework key sets",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-ConvertToInternal.ReadWrite.All",
+    "description": "Convert an external user to internal memeber user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-LifeCycleInfo.Read.All",
+    "description": "Read all users' lifecycle information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-LifeCycleInfo.ReadWrite.All",
+    "description": "Read and write all users' lifecycle information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-Mail.ReadWrite.All",
+    "description": "Read and write secondary mail addresses for users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-PasswordProfile.ReadWrite.All",
+    "description": "Read and write password profiles and reset user passwords",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-Phone.ReadWrite.All",
+    "description": "Read and write user mobile phone and business phones",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.DeleteRestore.All",
+    "description": "Delete and restore users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.EnableDisableAccount.All",
+    "description": "Enable and disable user accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.Export.All",
+    "description": "Export user's data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.Invite.All",
+    "description": "Invite guest users to the organization",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.ManageIdentities.All",
+    "description": "Manage  user identities",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.Read.All",
+    "description": "Read all users' full profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.ReadBasic.All",
+    "description": "Read all users' basic profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.ReadWrite.All",
+    "description": "Read and write all users' full profiles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.ReadWrite.CrossCloud",
+    "description": "Read and write profiles of users that originate from an external cloud.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.RevokeSessions.All",
+    "description": "Revoke all sign in sessions for a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthenticationMethod.Read.All",
+    "description": "Read all users' authentication methods",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthenticationMethod.ReadWrite.All",
+    "description": "Read and write all users' authentication methods.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthMethod-Passkey.Read.All",
+    "description": "Read all users' passkey authentication methods",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthMethod-Passkey.ReadWrite.All",
+    "description": "Read and write all users' passkey methods.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserNotification.ReadWrite.CreatedByApp",
+    "description": "Deliver and manage user's notifications",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserShiftPreferences.Read.All",
+    "description": "Read all user shift preferences",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserShiftPreferences.ReadWrite.All",
+    "description": "Read and write all user shift preferences",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserTeamwork.Read.All",
+    "description": "Read all user teamwork settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualAppointment.Read.All",
+    "description": "Read all virtual appointments for users, as authorized by online meetings application access policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualAppointment.ReadWrite.All",
+    "description": "Read-write all virtual appointments for users, as authorized by online meetings app access policy",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualAppointmentNotification.Send",
+    "description": "Send notification regarding virtual appointments for the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualEvent.Read.All",
+    "description": "Read all users' virtual events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualEventRegistration-Anon.ReadWrite.All",
+    "description": "Read and write anonymous users' virtual event registrations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "WindowsUpdates.ReadWrite.All",
+    "description": "Read and write all Windows update deployment settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "WorkforceIntegration.Read.All",
+    "description": "Read workforce integrations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "WorkforceIntegration.ReadWrite.All",
+    "description": "Read and write workforce integrations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AgreementAcceptance.Read",
+    "description": "Read user terms of use acceptance statuses",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AiEnterpriseInteraction.Read",
+    "description": "Read user AI enterprise interactions.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Analytics.Read",
+    "description": "Read user activity statistics",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppCatalog.Submit",
+    "description": "Submit application packages to the catalog and cancel pending submissions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppCertTrustConfiguration.Read.All",
+    "description": "Read the trusted certificate authority configuration for applications",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AppCertTrustConfiguration.ReadWrite.All",
+    "description": "Read and write the trusted certificate authority configuration for applications",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ApprovalSolution.Read",
+    "description": "Read approvals",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ApprovalSolution.ReadWrite",
+    "description": "Read, create, and respond to approvals",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ApprovalSolutionResponse.ReadWrite",
+    "description": "Read and respond to approvals assigned to the current user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioConfig.Read.All",
+    "description": "Read business scenario configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "BusinessScenarioConfig.ReadWrite.All",
+    "description": "Read and write business scenario configurations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.Read.Shared",
+    "description": "Read user and shared calendars",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.ReadBasic",
+    "description": "Read basic details of user calendars",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calendars.ReadWrite.Shared",
+    "description": "Read and write user and shared calendars",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallDelegation.Read",
+    "description": "Read delegation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallDelegation.ReadWrite",
+    "description": "Read and write delegation settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CallEvents.Read",
+    "description": "Read call event data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.Edit",
+    "description": "Edit user's channel messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.ReadWrite",
+    "description": "Read and write user channel messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.Send",
+    "description": "Send channel messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.Read",
+    "description": "Read user chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadBasic",
+    "description": "Read names and members of user chat threads",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ReadWrite",
+    "description": "Read and write user chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.Read",
+    "description": "Read the members of chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.ReadWrite",
+    "description": "Add and remove members from chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMessage.Read",
+    "description": "Read user chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMessage.Send",
+    "description": "Send user chat messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConsentRequest.Create",
+    "description": "Create consent requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConsentRequest.Read",
+    "description": "Read consent requests created by the user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ConsentRequest.ReadApprove.All",
+    "description": "Read and approve consent requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Contacts.Read.Shared",
+    "description": "Read user and shared contacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Contacts.ReadWrite.Shared",
+    "description": "Read and write user and shared contacts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CopilotSettings-LimitedMode.Read",
+    "description": "Read organization-wide copilot limited mode setting",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CopilotSettings-LimitedMode.ReadWrite",
+    "description": "Read and write organization-wide copilot limited mode setting",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CrossTenantUserProfileSharing.Read",
+    "description": "Read shared cross-tenant user profile and export data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "CrossTenantUserProfileSharing.ReadWrite",
+    "description": "Read shared cross-tenant user profile and export or delete data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Device.Command",
+    "description": "Communicate with user devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Device.CreateFromOwnedTemplate",
+    "description": "Create devices based on owned device templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Device.Read",
+    "description": "Read user devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Directory.AccessAsUser.All",
+    "description": "Access directory as the signed in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EAS.AccessAsUser.All",
+    "description": "Access mailboxes via Exchange ActiveSync",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAdministration.Read",
+    "description": "Read education app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAdministration.ReadWrite",
+    "description": "Manage education app settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.Read",
+    "description": "Read users' class assignments and their grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadBasic",
+    "description": "Read users' class assignments without grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadWrite",
+    "description": "Read and write users' class assignments and their grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduAssignments.ReadWriteBasic",
+    "description": "Read and write users' class assignments without grades",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduCurricula.Read",
+    "description": "Read the user's class modules and resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduCurricula.ReadWrite",
+    "description": "Read and write the user's class modules and resources",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.Read",
+    "description": "Read users' view of the roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.ReadBasic",
+    "description": "Read a limited subset of users' view of the roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.ReadWrite",
+    "description": "Read and write users' view of the roster",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "email",
+    "description": "View users' email address",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EngagementRole.Read",
+    "description": "Read a user's Viva Engage roles",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EntitlementMgmt-SubjectAccess.ReadWrite",
+    "description": "Read and write entitlement management resources related to self-service operations",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EWS.AccessAsUser.All",
+    "description": "Access mailboxes as the signed-in user via Exchange Web Services",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Family.Read",
+    "description": "Read your family info",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.Read",
+    "description": "Read user files",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.Read.Selected",
+    "description": "Read files that the user selects (preview)",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.ReadWrite",
+    "description": "Have full access to user files",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Files.ReadWrite.Selected",
+    "description": "Read and write files that the user selects (preview)",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "FileStorageContainer.Manage.All",
+    "description": "Manage all file storage containers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Financials.ReadWrite.All",
+    "description": "Read and write financials data",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Goals-Export.Read.All",
+    "description": "Read all goals and export jobs that a user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Goals-Export.ReadWrite.All",
+    "description": "Have full access to all goals and export jobs a user can access",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "IMAP.AccessAsUser.All",
+    "description": "Read and write access to mailboxes via IMAP.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionConfig.Read",
+    "description": "Read configurations for protecting organizational data applicable to the user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "InformationProtectionPolicy.Read",
+    "description": "Read user sensitivity labels and label policies.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningAssignedCourse.Read",
+    "description": "Read user's assignments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningProvider.Read",
+    "description": "Read learning provider",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningProvider.ReadWrite",
+    "description": "Manage learning provider",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "LearningSelfInitiatedCourse.Read",
+    "description": "Read user's self-initiated courses",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.Read.Shared",
+    "description": "Read user and shared mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.ReadBasic.Shared",
+    "description": "Read user and shared basic mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.ReadWrite.Shared",
+    "description": "Read and write user and shared mail",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Mail.Send.Shared",
+    "description": "Send mail on behalf of others",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxFolder.Read",
+    "description": "Read a user's mailbox folders",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxFolder.ReadWrite",
+    "description": "Read and write a user's mailbox folders",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxItem.ImportExport",
+    "description": "Allows the app to perform backup and restore of mailbox items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "MailboxItem.Read",
+    "description": "Read a user's mailbox items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ManagedTenants.Read.All",
+    "description": "Read all managed tenant information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ManagedTenants.ReadWrite.All",
+    "description": "Read and write all managed tenant information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.Create",
+    "description": "Create user OneNote notebooks",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.Read",
+    "description": "Read user OneNote notebooks",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.ReadWrite",
+    "description": "Read and write user OneNote notebooks",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notes.ReadWrite.CreatedByApp",
+    "description": "Limited notebook access (deprecated)",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Notifications.ReadWrite.CreatedByApp",
+    "description": "Deliver and manage user notifications for this app",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "offline_access",
+    "description": "Maintain access to data you have given it access to",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetings.Read",
+    "description": "Read user's online meetings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetings.ReadWrite",
+    "description": "Read and create user's online meetings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "openid",
+    "description": "Sign users in",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "People.Read",
+    "description": "Read users' relevant people lists",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Place.ReadWrite.All",
+    "description": "Read and write organization places",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.MobilityManagement",
+    "description": "Read and write your organization's mobility management policies",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "POP.AccessAsUser.All",
+    "description": "Read and write access to mailboxes via POP.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Presence.Read",
+    "description": "Read user's presence information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Presence.ReadWrite",
+    "description": "Read and write a user's presence information",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintConnector.Read.All",
+    "description": "Read print connectors",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintConnector.ReadWrite.All",
+    "description": "Read and write print connectors",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Printer.Create",
+    "description": "Register printers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Printer.FullControl.All",
+    "description": "Register, read, update, and unregister printers",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrinterShare.Read.All",
+    "description": "Read printer shares",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrinterShare.ReadBasic.All",
+    "description": "Read basic information about printer shares",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrinterShare.ReadWrite.All",
+    "description": "Read and write printer shares",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.Create",
+    "description": "Create print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.Read",
+    "description": "Read user's print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadBasic",
+    "description": "Read basic information of user's print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadWrite",
+    "description": "Read and write user's print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintJob.ReadWriteBasic",
+    "description": "Read and write basic information of user's print jobs",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PrintSettings.ReadWrite.All",
+    "description": "Read and write tenant-wide print settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "profile",
+    "description": "View users' basic profile",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForChat",
+    "description": "Read resource specific permissions granted on a chat",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForTeam",
+    "description": "Read resource specific permissions granted on a team",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ResourceSpecificPermissionGrant.ReadForUser",
+    "description": "Read resource specific permissions granted on a user account",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceMessageViewpoint.Write",
+    "description": "Update user status on service announcement messages",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ShortNotes.Read",
+    "description": "Read short notes of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ShortNotes.ReadWrite",
+    "description": "Read, create, edit, and delete short notes of the signed-in user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "SMTP.Send",
+    "description": "Send emails from mailboxes using SMTP AUTH.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Subscription.Read.All",
+    "description": "Read all webhook subscriptions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.Read",
+    "description": "Read user's tasks and task lists",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.Read.Shared",
+    "description": "Read user and shared tasks",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.ReadWrite",
+    "description": "Create, read, update, and delete user’s tasks and task lists",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Tasks.ReadWrite.Shared",
+    "description": "Read and write user and shared tasks",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Read",
+    "description": "Read user's teamwork activity feed",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForChat",
+    "description": "Manage installation and permission grants of selected Teams apps in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForTeam",
+    "description": "Manage installation and permission grants of selected Teams apps in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ManageSelectedForUser",
+    "description": "Manage installation and permission grants of selected Teams apps in users' personal scope",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForChat",
+    "description": "Read installed Teams apps in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForTeam",
+    "description": "Read installed Teams apps in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadForUser",
+    "description": "Read user's installed Teams apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForChat",
+    "description": "Read selected installed Teams apps in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForTeam",
+    "description": "Read selected installed Teams apps in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadSelectedForUser",
+    "description": "Read user's selected installed Teams apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForChat",
+    "description": "Manage installed Teams apps in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForTeam",
+    "description": "Manage installed Teams apps in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentForUser",
+    "description": "Manage installation and permission grants of Teams apps in users' personal scope",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForChat",
+    "description": "Allow the Teams app to manage itself and its permission grants in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForTeam",
+    "description": "Allow the Teams app to manage itself and its permission grants in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteAndConsentSelfForUser",
+    "description": "Allow the Teams app to manage itself and its permission grants in user accounts",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForChat",
+    "description": "Manage installed Teams apps in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForTeam",
+    "description": "Manage installed Teams apps in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteForUser",
+    "description": "Manage user's installed Teams apps",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForChat",
+    "description": "Manage selected Teams apps installed in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForTeam",
+    "description": "Manage selected Teams apps installed in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelectedForUser",
+    "description": "Manage selected Teams apps installed for a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForChat",
+    "description": "Allow the Teams app to manage itself in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForTeam",
+    "description": "Allow the app to manage itself in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.ReadWriteSelfForUser",
+    "description": "Allow the Teams app to manage itself for a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForChat",
+    "description": "Allow the Teams app to manage all tabs in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForTeam",
+    "description": "Allow the Teams app to manage all tabs in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteForUser",
+    "description": "Allow the Teams app to manage all tabs for a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForChat",
+    "description": "Allow the Teams app to manage only its own tabs in chats",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForTeam",
+    "description": "Allow the Teams app to manage only its own tabs in teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWriteSelfForUser",
+    "description": "Allow the Teams app to manage only its own tabs for a user",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamTemplates.Read",
+    "description": "Read available Teams templates",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkTag.Read",
+    "description": "Read tags in Teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkTag.ReadWrite",
+    "description": "Read and write tags in Teams",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamworkUserInteraction.Read.All",
+    "description": "Read all of the possible Teams interactions between the user and other users",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatAssessment.ReadWrite.All",
+    "description": "Read and write threat assessment requests",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmission.Read",
+    "description": "Read threat submissions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmission.ReadWrite",
+    "description": "Read and write threat submissions",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Topic.Read.All",
+    "description": "Read topic items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UnifiedGroupMember.Read.AsGuest",
+    "description": "Read unified group memberships as guest",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.Read",
+    "description": "Sign in and read user profile",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User.ReadWrite",
+    "description": "Read and write access to user profile",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserActivity.ReadWrite.CreatedByApp",
+    "description": "Read and write app activity to users' activity feed",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthenticationMethod.Read",
+    "description": "Read user authentication methods.",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserAuthenticationMethod.ReadWrite",
+    "description": "Read and write user authentication methods",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserCloudClipboard.Read",
+    "description": "Read cloud clipboard items",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserTeamwork.Read",
+    "description": "Read user teamwork settings",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserTimelineActivity.Write.CreatedByApp",
+    "description": "Write app activity to users' timeline",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserWindowsSettings.Read.All",
+    "description": "Read windows settings for all devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserWindowsSettings.ReadWrite.All",
+    "description": "Read and write windows settings for all devices",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualAppointment.Read",
+    "description": "Read a user's virtual appointments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualAppointment.ReadWrite",
+    "description": "Read and write a user's virtual appointments",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualEvent.Read",
+    "description": "Read your virtual events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualEvent.ReadWrite",
+    "description": "Read and write your virtual events",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.ApplicationConfiguration",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Delete.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWrite.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.ReadWrite.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.ReadWrite.HybridAuthentication",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamMember.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelSettings.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelSettings.ReadWrite.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMessage.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Channel.Delete.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.WriteWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Send.User",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "VirtualEvent.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMember.ReadWrite.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Policy.Read.HybridAuthentication",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "UserWindowsSettings.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingTranscript.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.Manage.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMember.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OnlineMeetingRecording.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamSettings.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamSettings.ReadWrite.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-MicrosoftInstall.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgSettings-MicrosoftInstall.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMember.ReadWrite",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EduRoster.Write",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Chat.ManageDeletion.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Send.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsActivity.Send.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.Read.User",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "File.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Create.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatSettings.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatSettings.ReadWrite.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Calls.JoinGroupCalls.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Channel.Create.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChannelMember.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsAppInstallation.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsApp.Read.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Create.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "TeamsTab.Delete.Group",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "EntitlementManagement.Read.All EntitlementManagement.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ChatMessage.Read.Chat",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "PermissionsAnalytics.Read.OwnedBy",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "OrgContact.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ScheduledPermissions.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Site.Manage.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ServiceActivity-MicrosoftWeb.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceTemplate.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "AiEnterpriseInteraction.Read.User",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group-UsageRight.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group-CloudLicensing.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Group-CloudLicensing.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-UsageRight.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-CloudLicensing.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-CloudLicensing.Read",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "User-UsageRight.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ThreatSubmissionPolicies.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "DeviceManagementManagedDevices.PriviligedOperation.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "Site.FullControl.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ManagedTenant.Read.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  },
+  {
+    "name": "ManagedTenant.ReadWrite.All",
+    "description": "",
+    "applicationPermission": false,
+    "delegatePermission": false
+  }
+];
+
+// Total permissions: 811
         // Get references to DOM elements
         const urlForm = document.getElementById('urlForm');
         const urlType = document.getElementById('urlType');
@@ -662,6 +5629,129 @@
                 aboutTab.classList.add('active');
                 aboutTabContent.classList.add('active');
             }
+        }
+
+        // Permission Modal Functionality
+        function initializePermissionModal() {
+            const addGraphPermissionBtn = document.getElementById('addGraphPermissionBtn');
+            const permissionModal = document.getElementById('permissionModal');
+            const closeModalBtn = document.getElementById('closeModalBtn');
+            const cancelModalBtn = document.getElementById('cancelModalBtn');
+            const permissionSearch = document.getElementById('permissionSearch');
+            const modalPermissionsList = document.getElementById('modalPermissionsList');
+            const noPermissionsMsg = document.getElementById('noPermissionsMsg');
+            
+            let currentSearchTerm = '';
+            
+            // Open modal
+            function openModal() {
+                permissionModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+                permissionSearch.value = '';
+                currentSearchTerm = '';
+                renderPermissions();
+                setTimeout(() => permissionSearch.focus(), 100);
+            }
+            
+            // Close modal
+            function closeModal() {
+                permissionModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            
+            // Add permission to scope textarea
+            function addPermissionToScope(permission) {
+                const currentScopes = scopeInput.value.trim();
+                const newScope = `https://graph.microsoft.com/${permission.name}`;
+                
+                // Check if permission already exists
+                if (currentScopes.includes(newScope)) {
+                    showMessage('Permission already added to scope', 'warning');
+                    return;
+                }
+                
+                // Add the permission
+                const updatedScopes = currentScopes ? `${currentScopes} ${newScope}` : newScope;
+                scopeInput.value = updatedScopes;
+                
+                // Show success message and close modal
+                showMessage(`Added permission: ${permission.name}`, 'success');
+                closeModal();
+            }
+            
+            // Render permissions in modal
+            function renderPermissions(searchTerm = '') {
+                modalPermissionsList.innerHTML = '';
+                
+                const filtered = GRAPH_PERMISSIONS.filter(permission => 
+                    permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    permission.description.toLowerCase().includes(searchTerm.toLowerCase())
+                );
+                
+                if (filtered.length === 0) {
+                    noPermissionsMsg.classList.remove('hidden');
+                    return;
+                } else {
+                    noPermissionsMsg.classList.add('hidden');
+                }
+                
+                // Limit to 100 results for performance
+                const displayedPermissions = filtered.slice(0, 100);
+                
+                displayedPermissions.forEach(permission => {
+                    const permissionDiv = document.createElement('div');
+                    permissionDiv.className = 'permission-item';
+                    
+                    permissionDiv.innerHTML = `
+                        <div class="permission-title">${permission.name}</div>
+                        <div class="permission-description">${permission.description || 'No description available'}</div>
+                    `;
+                    
+                    permissionDiv.addEventListener('click', () => {
+                        addPermissionToScope(permission);
+                    });
+                    
+                    modalPermissionsList.appendChild(permissionDiv);
+                });
+                
+                // Show result count if searching
+                if (searchTerm && filtered.length > 0) {
+                    const countDiv = document.createElement('div');
+                    countDiv.className = 'text-sm text-gray-600 mb-4 pb-2 border-b border-gray-200';
+                    countDiv.textContent = `Found ${filtered.length} permission${filtered.length !== 1 ? 's' : ''} ${displayedPermissions.length < filtered.length ? `(showing first ${displayedPermissions.length})` : ''}`;
+                    modalPermissionsList.insertBefore(countDiv, modalPermissionsList.firstChild);
+                }
+            }
+            
+            // Search functionality
+            let searchTimeout;
+            permissionSearch.addEventListener('input', (e) => {
+                clearTimeout(searchTimeout);
+                currentSearchTerm = e.target.value.trim();
+                
+                searchTimeout = setTimeout(() => {
+                    renderPermissions(currentSearchTerm);
+                }, 300);
+            });
+            
+            // Event listeners
+            addGraphPermissionBtn.addEventListener('click', openModal);
+            closeModalBtn.addEventListener('click', closeModal);
+            cancelModalBtn.addEventListener('click', closeModal);
+            
+            // Close modal when clicking outside
+            permissionModal.addEventListener('click', (e) => {
+                if (e.target === permissionModal) {
+                    closeModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !permissionModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+            });
         }
 
         // Function to toggle fields based on URL type
@@ -736,6 +5826,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             toggleTenantIdField();
             toggleUrlTypeFields();
+            initializePermissionModal();
         });
 
         // Function to display messages to the user

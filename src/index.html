@@ -479,6 +479,54 @@
             opacity: 1;
         }
         
+        /* Base URL Type Option Styles */
+        .base-url-option {
+            padding: 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            position: relative;
+            min-height: 60px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        
+        .base-url-option:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+            transform: translateY(-1px);
+        }
+        
+        .base-url-option.active {
+            border-color: #10b981;
+            background: #ecfdf5;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+        }
+        
+        .base-url-option.active::before {
+            content: '';
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+        }
+        
+        .base-url-option.active::after {
+            content: '✓';
+            position: absolute;
+            top: 0.3rem;
+            right: 0.4rem;
+            color: white;
+            font-size: 8px;
+            font-weight: bold;
+        }
+        
         .url-type-link {
             color: #3b82f6;
             text-decoration: none;
@@ -596,14 +644,42 @@
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label for="baseUrlType" class="label">Base URL Type</label>
-                            <select id="baseUrlType" class="select">
-                                <option value="specific">Specific Tenant</option>
-                                <option value="common">Multi-tenant (common)</option>
-                                <option value="consumers">Microsoft Accounts (consumers)</option>
-                                <option value="organizations">Work/School & Personal (organizations)</option>
-                            </select>
+                        <div class="space-y-4">
+                            <label class="label">Base URL Type</label>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <div class="base-url-option active" data-value="specific" id="specificTenantOption">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="building" class="w-4 h-4 text-blue-600"></i>
+                                        <span class="font-semibold text-sm">Specific Tenant</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Single organization</p>
+                                </div>
+                                
+                                <div class="base-url-option" data-value="common" id="commonTenantOption">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="globe" class="w-4 h-4 text-green-600"></i>
+                                        <span class="font-semibold text-sm">Multi-tenant</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Any organization</p>
+                                </div>
+                                
+                                <div class="base-url-option" data-value="consumers" id="consumersTenantOption">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="user" class="w-4 h-4 text-purple-600"></i>
+                                        <span class="font-semibold text-sm">Consumers</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Personal accounts</p>
+                                </div>
+                                
+                                <div class="base-url-option" data-value="organizations" id="organizationsTenantOption">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="users" class="w-4 h-4 text-orange-600"></i>
+                                        <span class="font-semibold text-sm">Organizations</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Work/school accounts</p>
+                                </div>
+                            </div>
+                            <input type="hidden" id="baseUrlType" value="specific">
                             <p class="text-xs text-gray-500">Choose the authentication endpoint: specific tenant for single organization, common for multi-tenant apps, consumers for personal Microsoft accounts only, or organizations for work/school accounts from any organization</p>
                         </div>
                         
@@ -6081,10 +6157,26 @@ const GRAPH_PERMISSIONS = [
             }
         });
         
-        // Event listener for baseUrlType change
-        baseUrlType.addEventListener('change', () => {
-            toggleTenantIdField();
-            generateUrlRealTime();
+        // Event listeners for base URL type option buttons
+        document.querySelectorAll('.base-url-option').forEach(option => {
+            option.addEventListener('click', () => {
+                const value = option.getAttribute('data-value');
+                
+                // Remove active class from all options
+                document.querySelectorAll('.base-url-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                
+                // Add active class to clicked option
+                option.classList.add('active');
+                
+                // Update hidden input value
+                baseUrlType.value = value;
+                
+                // Update tenant field visibility and URL
+                toggleTenantIdField();
+                generateUrlRealTime();
+            });
         });
         
         // Event listener for optional parameters toggle
@@ -6285,7 +6377,6 @@ const GRAPH_PERMISSIONS = [
                 loginHintInput,
                 domainHintInput,
                 adminConsentState,
-                baseUrlType,
                 urlType
             ];
             

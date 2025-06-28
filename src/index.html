@@ -626,7 +626,7 @@
                     
                     <div class="space-y-4">
                         <div class="generated-url-wrapper">
-                            <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Fill in the required fields below to see your generated URL..."></textarea>
+                            <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here as you fill in the fields..."></textarea>
                         </div>
                         <button type="button" id="copyUrl" class="button button-primary w-full">
                             <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
@@ -723,7 +723,7 @@
                                 <span class="text-red-500">*</span>
                             </label>
                             <div class="space-y-2">
-                                <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)">openid profile email offline_access https://graph.microsoft.com/User.Read</textarea>
+                                <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)"></textarea>
                                 <button type="button" id="addGraphPermissionBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     Add Graph Permission
@@ -785,6 +785,7 @@
                         <div class="space-y-2">
                             <label for="responseMode" class="label">Response Mode</label>
                             <select id="responseMode" class="select">
+                                <option value="">Select response mode (optional)</option>
                                 <option value="form_post">form_post</option>
                                 <option value="query">query</option>
                                 <option value="fragment">fragment</option>
@@ -6087,11 +6088,6 @@ const GRAPH_PERMISSIONS = [
                 document.querySelector('label[for="redirectUri"] span').style.display = 'inline'; // Show required asterisk
                 document.querySelector('label[for="scope"] span').style.display = 'inline'; // Show required asterisk
                 redirectUriInput.setAttribute('required', 'true');
-                
-                // Set default scope for admin consent
-                if (scopeInput.value === 'openid profile email offline_access https://graph.microsoft.com/User.Read') {
-                    scopeInput.value = 'https://graph.microsoft.com/.default';
-                }
             } else {
                 // Hide admin consent fields
                 adminConsentFields.classList.add('field-hidden');
@@ -6114,11 +6110,6 @@ const GRAPH_PERMISSIONS = [
                 document.querySelector('label[for="redirectUri"] span').style.display = 'inline'; // Show required asterisk
                 document.querySelector('label[for="scope"] span').style.display = 'inline'; // Show required asterisk
                 redirectUriInput.setAttribute('required', 'true');
-                
-                // Restore default scope for auth
-                if (scopeInput.value === 'https://graph.microsoft.com/.default') {
-                    scopeInput.value = 'openid profile email offline_access https://graph.microsoft.com/User.Read';
-                }
             }
         }
 
@@ -6272,25 +6263,19 @@ const GRAPH_PERMISSIONS = [
             // Construct query parameters
             const params = new URLSearchParams();
             
-            // Add client_id (always required)
+            // Add client_id only if it has a value
             if (clientId) {
                 params.append('client_id', clientId);
-            } else {
-                params.append('client_id', '{client-id}');
             }
 
             if (isAdminConsent) {
                 // Admin consent specific parameters
                 if (redirectUri) {
                     params.append('redirect_uri', redirectUri);
-                } else {
-                    params.append('redirect_uri', '{redirect-uri}');
                 }
                 
                 if (scope) {
                     params.append('scope', scope);
-                } else {
-                    params.append('scope', '{scope}');
                 }
                 
                 if (adminConsentState.value.trim()) {
@@ -6299,18 +6284,17 @@ const GRAPH_PERMISSIONS = [
             } else {
                 // Regular authorization parameters
                 const responseType = responseTypeSelect.value;
-                params.append('response_type', responseType);
+                // Only add response_type if it has a value
+                if (responseType) {
+                    params.append('response_type', responseType);
+                }
                 
                 if (redirectUri) {
                     params.append('redirect_uri', redirectUri);
-                } else {
-                    params.append('redirect_uri', '{redirect-uri}');
                 }
                 
                 if (scope) {
                     params.append('scope', scope);
-                } else {
-                    params.append('scope', '{scope}');
                 }
 
                 // Add optional parameters if they have values
@@ -6335,7 +6319,11 @@ const GRAPH_PERMISSIONS = [
             }
 
             // Combine base URL and parameters
-            const fullUrl = `${baseUrl}?${params.toString()}`;
+            let fullUrl = baseUrl;
+            const paramString = params.toString();
+            if (paramString) {
+                fullUrl += `?${paramString}`;
+            }
             generatedUrlTextarea.value = fullUrl;
         }
 

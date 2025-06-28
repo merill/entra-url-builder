@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Sitemap
+Sitemap: https://entra-url-builder.com/sitemap.xml
+
+# Allow search engines to crawl the main page and assets
+Allow: /index.html
+Allow: /icon.svg
+Allow: /manifest.json

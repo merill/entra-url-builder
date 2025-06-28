@@ -1,0 +1,20 @@
+{
+    "name": "Entra Sign-in URL Builder",
+    "short_name": "Entra URL Builder",
+    "description": "Generate Microsoft Entra ID (Azure AD) OAuth 2.0 sign-in URLs",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any maskable"
+        }
+    ],
+    "categories": ["developer", "utilities", "productivity"],
+    "lang": "en",
+    "scope": "/"
+}

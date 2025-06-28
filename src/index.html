@@ -3,225 +3,488 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Entra Sign-in URL Generator</title>
+    <title>Entra Sign-in URL Builder - Generate Microsoft Azure AD OAuth 2.0 Authorization URLs</title>
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="Free online tool to generate Microsoft Entra ID (Azure AD) OAuth 2.0 sign-in URLs. Build authorization URLs for single-tenant, multi-tenant, and consumer authentication flows with custom parameters.">
+    <meta name="keywords" content="Microsoft Entra ID, Azure AD, OAuth 2.0, sign-in URL generator, authorization URL builder, Azure authentication, OIDC, Microsoft Graph, tenant authentication, SSO">
+    <meta name="author" content="Entra Sign-in URL Builder">
+    <meta name="robots" content="index, follow">
+    <meta name="language" content="English">
+    <meta name="revisit-after" content="7 days">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://entra-url-builder.com/">
+    <meta property="og:title" content="Entra Sign-in URL Builder - Generate Microsoft Azure AD OAuth URLs">
+    <meta property="og:description" content="Free online tool to generate Microsoft Entra ID (Azure AD) OAuth 2.0 sign-in URLs. Build authorization URLs for single-tenant, multi-tenant, and consumer authentication flows.">
+    <meta property="og:image" content="https://entra-url-builder.com/icon.svg">
+    <meta property="og:site_name" content="Entra Sign-in URL Builder">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://entra-url-builder.com/">
+    <meta property="twitter:title" content="Entra Sign-in URL Builder - Generate Microsoft Azure AD OAuth URLs">
+    <meta property="twitter:description" content="Free online tool to generate Microsoft Entra ID (Azure AD) OAuth 2.0 sign-in URLs. Build authorization URLs for authentication flows.">
+    <meta property="twitter:image" content="https://entra-url-builder.com/icon.svg">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="icon.svg">
+    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="apple-touch-icon" sizes="180x180" href="icon.svg">
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- Schema.org structured data -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Entra Sign-in URL Builder",
+        "description": "Free online tool to generate Microsoft Entra ID (Azure AD) OAuth 2.0 sign-in URLs for authentication flows",
+        "url": "https://entra-url-builder.com/",
+        "applicationCategory": "DeveloperApplication",
+        "operatingSystem": "Web Browser",
+        "offers": {
+            "@type": "Offer",
+            "price": "0",
+            "priceCurrency": "USD"
+        },
+        "creator": {
+            "@type": "Organization",
+            "name": "Entra Sign-in URL Builder"
+        },
+        "keywords": "Microsoft Entra ID, Azure AD, OAuth 2.0, URL generator, authentication"
+    }
+    </script>
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
     <style>
-        /* Custom styles for Inter font and general body styling */
+        /* Shadcn-inspired CSS Variables */
+        :root {
+            --background: 0 0% 100%;
+            --foreground: 222.2 84% 4.9%;
+            --card: 0 0% 100%;
+            --card-foreground: 222.2 84% 4.9%;
+            --popover: 0 0% 100%;
+            --popover-foreground: 222.2 84% 4.9%;
+            --primary: 221.2 83.2% 53.3%;
+            --primary-foreground: 210 40% 98%;
+            --secondary: 210 40% 96%;
+            --secondary-foreground: 222.2 84% 4.9%;
+            --muted: 210 40% 96%;
+            --muted-foreground: 215.4 16.3% 46.9%;
+            --accent: 210 40% 96%;
+            --accent-foreground: 222.2 84% 4.9%;
+            --destructive: 0 84.2% 60.2%;
+            --destructive-foreground: 210 40% 98%;
+            --border: 214.3 31.8% 91.4%;
+            --input: 214.3 31.8% 91.4%;
+            --ring: 221.2 83.2% 53.3%;
+            --radius: 0.5rem;
+        }
+        
         body {
             font-family: 'Inter', sans-serif;
-            background-color: #f0f2f5; /* Light gray background */
+            background-color: hsl(var(--muted));
+            min-height: 100vh;
+            padding: 1rem;
+        }
+        /* Shadcn-inspired component styles */
+        .card {
+            background-color: hsl(var(--card));
+            color: hsl(var(--card-foreground));
+            border: 1px solid hsl(var(--border));
+            border-radius: calc(var(--radius) + 2px);
+            box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        }
+        
+        .input {
             display: flex;
-            justify-content: center;
+            height: 2.5rem;
+            width: 100%;
+            border-radius: calc(var(--radius));
+            border: 1px solid hsl(var(--input));
+            background-color: hsl(var(--background));
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .input:focus {
+            outline: none;
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        .button {
+            display: inline-flex;
             align-items: center;
-            min-height: 100vh; /* Full viewport height */
-            padding: 20px; /* Padding around the content */
+            justify-content: center;
+            white-space: nowrap;
+            border-radius: calc(var(--radius));
+            font-size: 0.875rem;
+            font-weight: 500;
+            transition: all 0.2s ease-in-out;
+            height: 2.5rem;
+            padding: 0.5rem 1rem;
+            cursor: pointer;
+            border: none;
         }
-        /* Styling for the main container */
-        .container {
-            background-color: #ffffff; /* White background for the form */
-            border-radius: 12px; /* Rounded corners */
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Soft shadow */
-            padding: 32px; /* Inner padding */
-            max-width: 900px; /* Max width for larger screens */
-            width: 100%; /* Full width on smaller screens */
-            box-sizing: border-box; /* Include padding in width calculation */
+        
+        .button-primary {
+            background-color: hsl(var(--primary));
+            color: hsl(var(--primary-foreground));
         }
-        /* Styling for form labels */
-        label {
-            font-weight: 500; /* Medium font weight */
-            color: #333; /* Darker text color */
-            margin-bottom: 4px; /* Space below label */
-            display: block; /* Make label a block element */
+        
+        .button-primary:hover {
+            background-color: hsl(var(--primary) / 0.9);
         }
-        /* Styling for input fields and textareas */
-        input[type="text"],
-        input[type="url"],
-        textarea,
-        select {
-            width: 100%; /* Full width */
-            padding: 10px 12px; /* Padding inside input */
-            border: 1px solid #d1d5db; /* Light gray border */
-            border-radius: 8px; /* Rounded corners */
-            margin-bottom: 16px; /* Space below input */
-            font-size: 1rem; /* Standard font size */
-            color: #374151; /* Dark gray text */
-            box-sizing: border-box; /* Include padding and border in width */
-            transition: border-color 0.2s ease-in-out; /* Smooth transition for focus */
+        
+        .button-secondary {
+            background-color: hsl(var(--secondary));
+            color: hsl(var(--secondary-foreground));
+            border: 1px solid hsl(var(--border));
         }
-        input[type="text"]:focus,
-        input[type="url"]:focus,
-        textarea:focus,
-        select:focus {
-            outline: none; /* Remove default outline */
-            border-color: #3b82f6; /* Blue border on focus */
-            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25); /* Light blue shadow on focus */
+        
+        .button-secondary:hover {
+            background-color: hsl(var(--secondary) / 0.8);
         }
-        /* Styling for buttons */
-        button {
-            padding: 12px 24px; /* Padding for buttons */
-            border-radius: 8px; /* Rounded corners */
-            font-weight: 600; /* Semi-bold font weight */
-            cursor: pointer; /* Pointer cursor on hover */
-            transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out; /* Smooth transitions */
-        }
-        /* Primary button styling */
-        .btn-primary {
-            background-color: #3b82f6; /* Blue background */
-            color: #ffffff; /* White text */
-            border: none; /* No border */
-        }
-        .btn-primary:hover {
-            background-color: #2563eb; /* Darker blue on hover */
-            transform: translateY(-1px); /* Slight lift on hover */
-        }
-        .btn-primary:active {
-            transform: translateY(0); /* Reset on click */
-        }
-        /* Secondary button styling */
-        .btn-secondary {
-            background-color: #e5e7eb; /* Light gray background */
-            color: #4b5563; /* Dark gray text */
-            border: 1px solid #d1d5db; /* Light gray border */
-        }
-        .btn-secondary:hover {
-            background-color: #d1d5db; /* Darker gray on hover */
-            transform: translateY(-1px); /* Slight lift on hover */
-        }
-        .btn-secondary:active {
-            transform: translateY(0); /* Reset on click */
-        }
-        /* Styling for the result area */
-        #resultUrl {
-            background-color: #e0f2fe; /* Light blue background */
-            border: 1px solid #90cdf4; /* Blue border */
-            padding: 16px; /* Padding */
-            border-radius: 8px; /* Rounded corners */
-            word-break: break-all; /* Break long words */
-            font-family: monospace; /* Monospace font for URL */
-            font-size: 0.9rem; /* Slightly smaller font */
-            color: #1e40af; /* Dark blue text */
-            min-height: 80px; /* Minimum height */
-            resize: vertical; /* Allow vertical resizing */
-        }
-        /* Responsive grid for form fields */
-        .form-grid {
-            display: grid;
-            grid-template-columns: 1fr; /* Single column by default */
-            gap: 16px; /* Gap between grid items */
-        }
-        @media (min-width: 640px) { /* Small screens and up */
-            .form-grid {
-                grid-template-columns: repeat(2, 1fr); /* Two columns */
-            }
-        }
-        @media (min-width: 768px) { /* Medium screens and up */
-            .form-grid {
-                grid-template-columns: repeat(3, 1fr); /* Three columns */
-            }
-        }
-        /* Styling for the button group */
-        .button-group {
+        
+        .select {
             display: flex;
-            gap: 12px; /* Space between buttons */
-            justify-content: flex-end; /* Align buttons to the right */
-            margin-top: 24px; /* Space above buttons */
+            height: 2.5rem;
+            width: 100%;
+            border-radius: calc(var(--radius));
+            border: 1px solid hsl(var(--input));
+            background-color: hsl(var(--background));
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .select:focus {
+            outline: none;
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        .textarea {
+            display: flex;
+            min-height: 5rem;
+            width: 100%;
+            border-radius: calc(var(--radius));
+            border: 1px solid hsl(var(--input));
+            background-color: hsl(var(--background));
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem;
+            transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+        }
+        
+        .textarea:focus {
+            outline: none;
+            border-color: hsl(var(--ring));
+            box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
+        }
+        
+        .label {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: hsl(var(--foreground));
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+        
+        .alert {
+            border-radius: calc(var(--radius));
+            border: 1px solid hsl(var(--border));
+            padding: 1rem;
+            position: relative;
+        }
+        
+        .alert-success {
+            background-color: hsl(142.1 76.2% 36.3% / 0.1);
+            border-color: hsl(142.1 76.2% 36.3% / 0.2);
+            color: hsl(142.1 70.6% 45.3%);
+        }
+        
+        .alert-error {
+            background-color: hsl(var(--destructive) / 0.1);
+            border-color: hsl(var(--destructive) / 0.2);
+            color: hsl(var(--destructive));
+        }
+        
+        .alert-info {
+            background-color: hsl(var(--primary) / 0.1);
+            border-color: hsl(var(--primary) / 0.2);
+            color: hsl(var(--primary));
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">Entra Sign-in URL Generator</h1>
-
-        <form id="urlForm" class="space-y-6">
-            <div class="form-grid">
-                <!-- Base URL Section -->
-                <div class="col-span-full">
-                    <label for="baseUrlType">Base URL Type:</label>
-                    <select id="baseUrlType" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="specific">Specific Tenant</option>
-                        <option value="common">Multi-tenant (common)</option>
-                        <option value="consumers">Microsoft Accounts (consumers)</option>
-                        <option value="organizations">Work/School & Personal (organizations)</option>
-                    </select>
+    <div class="container mx-auto max-w-4xl p-6">
+        <!-- Header -->
+        <div class="card p-8 mb-8">
+            <div class="flex items-center gap-4 mb-4">
+                <div class="w-16 h-16 flex-shrink-0">
+                    <img src="icon.svg" alt="Entra URL Builder Logo" class="w-full h-full object-contain">
                 </div>
-                <div class="col-span-full" id="tenantIdField">
-                    <label for="tenantId">Tenant ID or Name:</label>
-                    <input type="text" id="tenantId" placeholder="e.g., yourcompany.onmicrosoft.com or tenant-id">
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Entra Sign-in URL Builder</h1>
+                    <p class="text-sm text-gray-600">Generate OAuth 2.0 authorization URLs for Microsoft Entra ID</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Form -->
+        <div class="card p-8">
+            <form id="urlForm" class="space-y-8">
+                <!-- Base URL Configuration -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="globe" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Base Configuration</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="baseUrlType" class="label">Base URL Type</label>
+                            <select id="baseUrlType" class="select">
+                                <option value="specific">Specific Tenant</option>
+                                <option value="common">Multi-tenant (common)</option>
+                                <option value="consumers">Microsoft Accounts (consumers)</option>
+                                <option value="organizations">Work/School & Personal (organizations)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2" id="tenantIdField">
+                            <label for="tenantId" class="label">Tenant ID or Name</label>
+                            <input type="text" id="tenantId" class="input" placeholder="e.g., yourcompany.onmicrosoft.com or tenant-id">
+                            <p class="text-xs text-gray-500">Your Azure AD tenant identifier</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Essential Parameters -->
-                <div>
-                    <label for="clientId">Client ID (Application ID):</label>
-                    <input type="text" id="clientId" placeholder="Required" required>
-                </div>
-                <div>
-                    <label for="redirectUri">Redirect URI:</label>
-                    <input type="url" id="redirectUri" placeholder="Required (e.g., http://localhost:3000/callback)" required>
-                </div>
-                <div>
-                    <label for="scope">Scope (space-separated):</label>
-                    <input type="text" id="scope" value="openid profile email offline_access https://graph.microsoft.com/User.Read" placeholder="Required">
-                </div>
-                <div>
-                    <label for="responseType">Response Type:</label>
-                    <select id="responseType" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="code">code (Auth Code Flow)</option>
-                        <option value="id_token">id_token (Implicit Flow)</option>
-                        <option value="code id_token">code id_token</option>
-                    </select>
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="settings" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Essential Parameters</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-2">
+                            <label for="clientId" class="label">
+                                Client ID (Application ID) 
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="clientId" class="input" placeholder="Required" required>
+                            <p class="text-xs text-gray-500">Application ID from Azure portal</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="redirectUri" class="label">
+                                Redirect URI 
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="url" id="redirectUri" class="input" placeholder="e.g., http://localhost:3000/callback" required>
+                            <p class="text-xs text-gray-500">Where users will be redirected after authentication</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="scope" class="label">
+                                Scope (space-separated) 
+                                <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="scope" class="input" value="openid profile email offline_access https://graph.microsoft.com/User.Read" placeholder="Required">
+                            <p class="text-xs text-gray-500">Permissions your app is requesting</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="responseType" class="label">Response Type</label>
+                            <select id="responseType" class="select">
+                                <option value="code">code (Auth Code Flow)</option>
+                                <option value="id_token">id_token (Implicit Flow)</option>
+                                <option value="code id_token">code id_token</option>
+                            </select>
+                            <p class="text-xs text-gray-500">OAuth 2.0 flow type</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Optional Parameters -->
-                <div>
-                    <label for="state">State:</label>
-                    <input type="text" id="state" placeholder="Optional (for CSRF protection)">
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Optional Parameters</h2>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <div class="space-y-2">
+                            <label for="state" class="label">State</label>
+                            <input type="text" id="state" class="input" placeholder="Optional (for CSRF protection)">
+                            <p class="text-xs text-gray-500">CSRF protection parameter</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="nonce" class="label">Nonce</label>
+                            <input type="text" id="nonce" class="input" placeholder="Optional (for replay protection)">
+                            <p class="text-xs text-gray-500">Replay attack protection</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="responseMode" class="label">Response Mode</label>
+                            <select id="responseMode" class="select">
+                                <option value="form_post">form_post</option>
+                                <option value="query">query</option>
+                                <option value="fragment">fragment</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="prompt" class="label">Prompt</label>
+                            <select id="prompt" class="select">
+                                <option value="">None</option>
+                                <option value="select_account">select_account</option>
+                                <option value="consent">consent</option>
+                                <option value="login">login</option>
+                                <option value="none">none (silent)</option>
+                            </select>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="loginHint" class="label">Login Hint</label>
+                            <input type="text" id="loginHint" class="input" placeholder="user@example.com">
+                            <p class="text-xs text-gray-500">Pre-fill username</p>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <label for="domainHint" class="label">Domain Hint</label>
+                            <input type="text" id="domainHint" class="input" placeholder="contoso.com">
+                            <p class="text-xs text-gray-500">Direct to specific domain</p>
+                        </div>
+                    </div>
                 </div>
-                <div>
-                    <label for="nonce">Nonce:</label>
-                    <input type="text" id="nonce" placeholder="Optional (for replay protection)">
+
+                <!-- Action Buttons -->
+                <div class="flex gap-3 justify-end pt-6 border-t border-gray-200">
+                    <button type="button" id="clearForm" class="button button-secondary">
+                        <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
+                        Clear Form
+                    </button>
+                    <button type="submit" class="button button-primary">
+                        <i data-lucide="link" class="w-4 h-4 mr-2"></i>
+                        Generate URL
+                    </button>
                 </div>
-                <div>
-                    <label for="responseMode">Response Mode:</label>
-                    <select id="responseMode" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="form_post">form_post</option>
-                        <option value="query">query</option>
-                        <option value="fragment">fragment</option>
-                    </select>
+            </form>
+        </div>
+
+        <!-- Result Section -->
+        <div class="card p-8 mt-8">
+            <div class="flex items-center gap-2 mb-4">
+                <i data-lucide="copy" class="w-4 h-4 text-gray-600"></i>
+                <h2 class="text-lg font-semibold text-gray-900">Generated Sign-in URL</h2>
+            </div>
+            
+            <div class="space-y-4">
+                <textarea id="generatedUrl" rows="6" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here..."></textarea>
+                <button id="copyUrl" class="button button-primary w-full">
+                    <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
+                    Copy URL to Clipboard
+                </button>
+            </div>
+            
+            <div id="messageBox" class="mt-4 hidden"></div>
+        </div>
+
+        <!-- SEO Content Section -->
+        <div class="card p-8 mt-8">
+            <div class="prose max-w-none">
+                <h2 class="text-xl font-semibold text-gray-900 mb-4">About Entra Sign-in URL Builder</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">What is this tool?</h3>
+                        <p class="mb-4">The Entra Sign-in URL Builder is a free online tool that helps developers generate Microsoft Entra ID (formerly Azure AD) OAuth 2.0 authorization URLs. This tool simplifies the process of creating properly formatted sign-in URLs for various authentication scenarios.</p>
+                        
+                        <h3 class="font-medium text-gray-900 mb-2">Key Features</h3>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            <li>Support for single-tenant, multi-tenant, and consumer flows</li>
+                            <li>Customizable OAuth 2.0 parameters</li>
+                            <li>CSRF and replay protection with state and nonce generation</li>
+                            <li>Copy-to-clipboard functionality</li>
+                            <li>Real-time URL validation</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-medium text-gray-900 mb-2">Supported Authentication Flows</h3>
+                        <ul class="list-disc list-inside space-y-1 mb-4">
+                            <li><strong>Authorization Code Flow:</strong> Most secure flow for web applications</li>
+                            <li><strong>Implicit Flow:</strong> For single-page applications (deprecated)</li>
+                            <li><strong>Hybrid Flow:</strong> Combination of code and implicit flows</li>
+                        </ul>
+                        
+                        <h3 class="font-medium text-gray-900 mb-2">Use Cases</h3>
+                        <ul class="list-disc list-inside space-y-1">
+                            <li>Testing Microsoft Graph API integrations</li>
+                            <li>Debugging Azure AD authentication issues</li>
+                            <li>Creating sign-in links for applications</li>
+                            <li>Learning OAuth 2.0 and OpenID Connect flows</li>
+                            <li>Rapid prototyping of authentication workflows</li>
+                        </ul>
+                    </div>
                 </div>
-                <div>
-                    <label for="prompt">Prompt:</label>
-                    <select id="prompt" class="w-full p-2 border border-gray-300 rounded-lg">
-                        <option value="">None</option>
-                        <option value="select_account">select_account</option>
-                        <option value="consent">consent</option>
-                        <option value="login">login</option>
-                        <option value="none">none (silent)</option>
-                    </select>
-                </div>
-                <div>
-                    <label for="loginHint">Login Hint:</label>
-                    <input type="text" id="loginHint" placeholder="Optional (e.g., user@example.com)">
-                </div>
-                <div>
-                    <label for="domainHint">Domain Hint:</label>
-                    <input type="text" id="domainHint" placeholder="Optional (e.g., contoso.com)">
+                
+                <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 class="font-medium text-blue-900 mb-2">💡 Pro Tips</h3>
+                    <ul class="text-sm text-blue-800 space-y-1">
+                        <li>• Always use HTTPS redirect URIs in production environments</li>
+                        <li>• Include appropriate scopes based on your application's requirements</li>
+                        <li>• Use the state parameter to prevent CSRF attacks</li>
+                        <li>• Test with different tenant types to ensure compatibility</li>
+                    </ul>
                 </div>
             </div>
-
-            <div class="button-group">
-                <button type="submit" class="btn-primary">Generate URL</button>
-                <button type="button" id="clearForm" class="btn-secondary">Clear Form</button>
-            </div>
-        </form>
-
-        <div class="mt-8">
-            <label for="generatedUrl" class="text-lg font-semibold text-gray-700 mb-2">Generated Sign-in URL:</label>
-            <textarea id="generatedUrl" rows="6" readonly class="w-full p-4 border border-blue-300 rounded-lg bg-blue-50 text-blue-800 resize-y"></textarea>
-            <button id="copyUrl" class="btn-primary w-full mt-4">Copy URL to Clipboard</button>
-            <div id="messageBox" class="mt-4 p-3 rounded-lg text-center hidden"></div>
         </div>
     </div>
+
+    <!-- Additional SEO Schema -->
+    <script type="application/ld+json">
+    {
+        "@context": "https://schema.org",
+        "@type": "HowTo",
+        "name": "How to Generate Microsoft Entra ID Sign-in URLs",
+        "description": "Step-by-step guide to create OAuth 2.0 authorization URLs for Microsoft Entra ID authentication",
+        "step": [
+            {
+                "@type": "HowToStep",
+                "name": "Select Base URL Type",
+                "text": "Choose between specific tenant, multi-tenant, consumers, or organizations authentication endpoint"
+            },
+            {
+                "@type": "HowToStep", 
+                "name": "Enter Required Parameters",
+                "text": "Provide Client ID, Redirect URI, and Scopes for your application"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Configure Optional Parameters",
+                "text": "Set response type, prompt behavior, and security parameters like state and nonce"
+            },
+            {
+                "@type": "HowToStep",
+                "name": "Generate and Copy URL",
+                "text": "Click Generate URL button and copy the resulting authorization URL to your clipboard"
+            }
+        ]
+    }
+    </script>
 
     <script>
         // Get references to DOM elements
@@ -264,14 +527,18 @@
         // Function to display messages to the user
         function showMessage(message, type = 'info') {
             messageBox.textContent = message;
-            messageBox.classList.remove('hidden', 'bg-red-100', 'text-red-700', 'bg-green-100', 'text-green-700', 'bg-blue-100', 'text-blue-700');
-            if (type === 'error') {
-                messageBox.classList.add('bg-red-100', 'text-red-700');
-            } else if (type === 'success') {
-                messageBox.classList.add('bg-green-100', 'text-green-700');
-            } else {
-                messageBox.classList.add('bg-blue-100', 'text-blue-700');
+            messageBox.classList.remove('hidden');
+            messageBox.className = 'mt-4 alert ' + (type === 'error' ? 'alert-error' : type === 'success' ? 'alert-success' : 'alert-info');
+            
+            // Add icon based on type
+            const icon = type === 'error' ? 'alert-circle' : type === 'success' ? 'check-circle' : 'info';
+            messageBox.innerHTML = `<i data-lucide="${icon}" class="w-4 h-4 inline mr-2"></i>${message}`;
+            
+            // Reinitialize Lucide icons for the new icon
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
             }
+            
             setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 3000); // Hide message after 3 seconds
@@ -386,6 +653,11 @@
         document.addEventListener('DOMContentLoaded', () => {
             stateInput.value = generateRandomString(32);
             nonceInput.value = generateRandomString(32);
+            
+            // Initialize Lucide icons
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
         });
 
     </script>

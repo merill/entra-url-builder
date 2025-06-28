@@ -90,11 +90,24 @@
             --radius: 0.5rem;
         }
         
+        /* Prevent FOUC (Flash of Unstyled Content) */
         body {
             font-family: 'Inter', sans-serif;
             background-color: hsl(var(--muted));
             min-height: 100vh;
             padding: 1rem;
+            visibility: hidden;
+        }
+        
+        body.loaded {
+            visibility: visible;
+        }
+        
+        /* Ensure SVG icons have correct size before Tailwind loads */
+        nav svg {
+            width: 1.25rem;
+            height: 1.25rem;
+            display: inline-block;
         }
         /* Shadcn-inspired component styles */
         .card {
@@ -6233,6 +6246,9 @@ const GRAPH_PERMISSIONS = [
         
         // Initial call to set correct visibility on load
         document.addEventListener('DOMContentLoaded', function() {
+            // Prevent FOUC by showing body after DOM is loaded
+            document.body.classList.add('loaded');
+            
             toggleTenantIdField();
             toggleUrlTypeFields();
             initializePermissionModal();

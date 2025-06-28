@@ -625,15 +625,10 @@
 
                 <!-- Optional Parameters -->
                 <div class="space-y-4">
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2">
-                            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-600"></i>
-                            <h2 class="text-lg font-semibold text-gray-900">Optional Parameters</h2>
-                        </div>
-                        <button type="button" id="toggleOptionalParams" class="button button-secondary text-sm py-1 px-2 h-auto">
-                            <i data-lucide="chevron-down" class="w-4 h-4 mr-1" id="optionalParamsIcon"></i>
-                            <span id="optionalParamsText">Show</span>
-                        </button>
+                    <div class="flex items-center gap-2 mb-4 cursor-pointer hover:bg-gray-50 p-2 rounded-md transition-all duration-200 border border-transparent" id="toggleOptionalParams">
+                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900 flex-1">Optional Parameters</h2>
+                        <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600 transition-transform duration-200" id="optionalParamsIcon"></i>
                     </div>
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 field-hidden" id="optionalParamsSection">
@@ -5734,7 +5729,6 @@ const GRAPH_PERMISSIONS = [
         const toggleOptionalParamsButton = document.getElementById('toggleOptionalParams');
         const optionalParamsSection = document.getElementById('optionalParamsSection');
         const optionalParamsIcon = document.getElementById('optionalParamsIcon');
-        const optionalParamsText = document.getElementById('optionalParamsText');
         const formTab = document.getElementById('formTab');
         const aboutTab = document.getElementById('aboutTab');
         const formTabContent = document.getElementById('formTabContent');
@@ -5743,15 +5737,18 @@ const GRAPH_PERMISSIONS = [
         // Function to toggle optional parameters visibility
         function toggleOptionalParams() {
             const isHidden = optionalParamsSection.classList.contains('field-hidden');
+            const toggleHeader = document.getElementById('toggleOptionalParams');
             
             if (isHidden) {
                 optionalParamsSection.classList.remove('field-hidden');
                 optionalParamsIcon.setAttribute('data-lucide', 'chevron-up');
-                optionalParamsText.textContent = 'Hide';
+                optionalParamsIcon.style.transform = 'rotate(180deg)';
+                toggleHeader.classList.add('bg-blue-50', 'border-blue-200');
             } else {
                 optionalParamsSection.classList.add('field-hidden');
                 optionalParamsIcon.setAttribute('data-lucide', 'chevron-down');
-                optionalParamsText.textContent = 'Show';
+                optionalParamsIcon.style.transform = 'rotate(0deg)';
+                toggleHeader.classList.remove('bg-blue-50', 'border-blue-200');
             }
             
             // Reinitialize Lucide icons for the updated icon

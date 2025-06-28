@@ -647,20 +647,20 @@
                         <div class="space-y-4">
                             <label class="label">Base URL Type</label>
                             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                <div class="base-url-option active" data-value="specific" id="specificTenantOption">
+                                <div class="base-url-option active" data-value="common" id="commonTenantOption">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <i data-lucide="globe" class="w-4 h-4 text-green-600"></i>
+                                        <span class="font-semibold text-sm">Common</span>
+                                    </div>
+                                    <p class="text-xs text-gray-600">Any organization</p>
+                                </div>
+                                
+                                <div class="base-url-option" data-value="specific" id="specificTenantOption">
                                     <div class="flex items-center gap-2 mb-1">
                                         <i data-lucide="building" class="w-4 h-4 text-blue-600"></i>
                                         <span class="font-semibold text-sm">Specific Tenant</span>
                                     </div>
                                     <p class="text-xs text-gray-600">Single organization</p>
-                                </div>
-                                
-                                <div class="base-url-option" data-value="common" id="commonTenantOption">
-                                    <div class="flex items-center gap-2 mb-1">
-                                        <i data-lucide="globe" class="w-4 h-4 text-green-600"></i>
-                                        <span class="font-semibold text-sm">Multi-tenant</span>
-                                    </div>
-                                    <p class="text-xs text-gray-600">Any organization</p>
                                 </div>
                                 
                                 <div class="base-url-option" data-value="consumers" id="consumersTenantOption">
@@ -679,7 +679,7 @@
                                     <p class="text-xs text-gray-600">Work/school accounts</p>
                                 </div>
                             </div>
-                            <input type="hidden" id="baseUrlType" value="specific">
+                            <input type="hidden" id="baseUrlType" value="common">
                             <p class="text-xs text-gray-500">Choose the authentication endpoint: specific tenant for single organization, common for multi-tenant apps, consumers for personal Microsoft accounts only, or organizations for work/school accounts from any organization</p>
                         </div>
                         

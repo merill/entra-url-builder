@@ -345,6 +345,13 @@
         #modalPermissionsList::-webkit-scrollbar-thumb:hover {
             background: #a1a1a1;
         }
+        
+        /* Fixed height modal permissions container */
+        .modal-permissions-container {
+            height: 400px;
+            min-height: 400px;
+            max-height: 400px;
+        }
     </style>
 </head>
 <body>
@@ -646,7 +653,7 @@
             </div>
             
             <!-- Permissions List -->
-            <div class="flex-1 overflow-y-auto p-4">
+            <div class="flex-1 overflow-y-auto p-4 modal-permissions-container">
                 <div id="modalPermissionsList" class="space-y-1">
                     <!-- Permissions will be populated here -->
                 </div>
@@ -5683,10 +5690,28 @@ const GRAPH_PERMISSIONS = [
             function renderPermissions(searchTerm = '') {
                 modalPermissionsList.innerHTML = '';
                 
-                const filtered = GRAPH_PERMISSIONS.filter(permission => 
-                    permission.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                    permission.description.toLowerCase().includes(searchTerm.toLowerCase())
-                );
+                let filtered;
+                if (searchTerm) {
+                    const searchLower = searchTerm.toLowerCase();
+                    
+                    // Split permissions into two groups: those starting with search term and others
+                    const startsWithTerm = GRAPH_PERMISSIONS.filter(permission => 
+                        permission.name.toLowerCase().startsWith(searchLower)
+                    );
+                    
+                    const containsTerm = GRAPH_PERMISSIONS.filter(permission => 
+                        !permission.name.toLowerCase().startsWith(searchLower) && (
+                            permission.name.toLowerCase().includes(searchLower) ||
+                            permission.description.toLowerCase().includes(searchLower)
+                        )
+                    );
+                    
+                    // Combine: permissions starting with term first, then others
+                    filtered = [...startsWithTerm, ...containsTerm];
+                } else {
+                    // Show all permissions when no search term
+                    filtered = GRAPH_PERMISSIONS;
+                }
                 
                 if (filtered.length === 0) {
                     noPermissionsMsg.classList.remove('hidden');

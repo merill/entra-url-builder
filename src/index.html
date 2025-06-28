@@ -388,7 +388,7 @@
         /* URL Type Button Selector Styles */
         .url-type-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             gap: 1rem;
             padding: 1rem 1.5rem;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -397,9 +397,17 @@
             margin-bottom: 2rem;
         }
         
+        /* Desktop view - side by side */
+        @media (min-width: 768px) {
+            .url-type-container {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
         .url-type-option {
             flex: 1;
-            max-width: 300px;
+            max-width: 100%;
             padding: 1rem;
             border: 2px solid #e5e7eb;
             border-radius: 0.5rem;
@@ -407,6 +415,13 @@
             cursor: pointer;
             transition: all 0.2s ease-in-out;
             position: relative;
+        }
+        
+        /* Desktop max-width constraint */
+        @media (min-width: 768px) {
+            .url-type-option {
+                max-width: 300px;
+            }
         }
         
         .url-type-option:hover {

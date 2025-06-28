@@ -686,13 +686,23 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 field-hidden" id="optionalParamsSection">
                         <div class="space-y-2">
                             <label for="state" class="label">State</label>
-                            <input type="text" id="state" class="input" placeholder="Optional (for CSRF protection)">
+                            <div class="flex gap-2">
+                                <input type="text" id="state" class="input flex-1" placeholder="Optional (for CSRF protection)">
+                                <button type="button" id="generateState" class="button button-secondary px-3 py-2 text-sm" title="Generate random state value">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                             <p class="text-xs text-gray-500">Random value to prevent CSRF attacks. Azure AD returns this exact value in the response, allowing your app to verify the request authenticity</p>
                         </div>
                         
                         <div class="space-y-2">
                             <label for="nonce" class="label">Nonce</label>
-                            <input type="text" id="nonce" class="input" placeholder="Optional (for replay protection)">
+                            <div class="flex gap-2">
+                                <input type="text" id="nonce" class="input flex-1" placeholder="Optional (for replay protection)">
+                                <button type="button" id="generateNonce" class="button button-secondary px-3 py-2 text-sm" title="Generate random nonce value">
+                                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                                </button>
+                            </div>
                             <p class="text-xs text-gray-500">Random value included in ID tokens to prevent replay attacks. Must be unique for each authentication request to ensure token freshness</p>
                         </div>
                         
@@ -6306,8 +6316,7 @@ const GRAPH_PERMISSIONS = [
         }
 
         document.addEventListener('DOMContentLoaded', () => {
-            stateInput.value = generateRandomString(32);
-            nonceInput.value = generateRandomString(32);
+            // Don't generate state and nonce by default - let users click buttons to generate
             
             // Initialize Lucide icons
             if (typeof lucide !== 'undefined') {
@@ -6317,6 +6326,17 @@ const GRAPH_PERMISSIONS = [
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();
             generateUrlRealTime();
+        });
+
+        // Event listeners for generate buttons
+        document.getElementById('generateState').addEventListener('click', () => {
+            stateInput.value = generateRandomString(32);
+            generateUrlRealTime(); // Update URL immediately
+        });
+
+        document.getElementById('generateNonce').addEventListener('click', () => {
+            nonceInput.value = generateRandomString(32);
+            generateUrlRealTime(); // Update URL immediately
         });
 
     </script>

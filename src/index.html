@@ -353,10 +353,10 @@
             max-height: 400px;
         }
         
-        /* Toggle Switch Styles */
-        .toggle-container {
+        /* URL Type Button Selector Styles */
+        .url-type-container {
             display: flex;
-            align-items: center;
+            justify-content: center;
             gap: 1rem;
             padding: 1rem 1.5rem;
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
@@ -365,71 +365,104 @@
             margin-bottom: 2rem;
         }
         
-        .toggle-switch {
-            position: relative;
-            display: inline-block;
-            width: 3.5rem;
-            height: 2rem;
-        }
-        
-        .toggle-switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        
-        .toggle-slider {
-            position: absolute;
+        .url-type-option {
+            flex: 1;
+            max-width: 300px;
+            padding: 1rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
             cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #3b82f6;
-            transition: 0.3s;
-            border-radius: 2rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease-in-out;
+            position: relative;
         }
         
-        .toggle-slider:before {
+        .url-type-option:hover {
+            border-color: #3b82f6;
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.1);
+        }
+        
+        .url-type-option.active {
+            border-color: #10b981;
+            background: #ecfdf5;
+            box-shadow: 0 2px 8px rgba(16, 185, 129, 0.15);
+        }
+        
+        .url-type-title {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1f2937;
+            margin-bottom: 0.5rem;
+        }
+        
+        .url-type-description {
+            font-size: 0.875rem;
+            color: #6b7280;
+            line-height: 1.4;
+        }
+        
+        .help-icon {
+            width: 16px;
+            height: 16px;
+            color: #6b7280;
+            cursor: help;
+            position: relative;
+        }
+        
+        .help-tooltip {
+            visibility: hidden;
+            opacity: 0;
             position: absolute;
-            content: "";
-            height: 1.5rem;
-            width: 1.5rem;
-            left: 0.25rem;
-            bottom: 0.25rem;
-            background-color: white;
-            transition: 0.3s;
-            border-radius: 50%;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+            top: -90px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: #1f2937;
+            color: white;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            font-size: 0.75rem;
+            width: 280px;
+            white-space: normal;
+            z-index: 1000;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            text-align: left;
         }
         
-        input:checked + .toggle-slider {
-            background-color: #dc2626;
+        .help-tooltip::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            border: 5px solid transparent;
+            border-top-color: #1f2937;
         }
         
-        input:checked + .toggle-slider:before {
-            transform: translateX(1.5rem);
+        .help-icon:hover .help-tooltip {
+            visibility: visible;
+            opacity: 1;
         }
         
-        .toggle-label {
-            font-weight: 600;
-            font-size: 1.125rem;
-            color: #1f2937;
-            min-width: 200px;
-        }
-        
-        .toggle-label-link {
-            font-weight: 600;
-            font-size: 1.125rem;
-            color: #1f2937;
-            min-width: 200px;
-            text-decoration: none;
-            transition: color 0.2s ease-in-out;
-        }
-        
-        .toggle-label-link:hover {
+        .url-type-link {
             color: #3b82f6;
+            text-decoration: none;
+        }
+        
+        .url-type-link:hover {
+            text-decoration: underline;
+        }
+        
+        /* Remove old toggle styles */
+        .toggle-switch {
+            display: none;
+        }
+        
+        .hidden-input {
+            display: none;
         }
     </style>
 </head>
@@ -468,15 +501,41 @@
                 <div id="formTabContent" class="tab-content active">
                 <form id="urlForm" class="space-y-8">
                 
-                <!-- URL Type Toggle (Outside Base Configuration) -->
-                <div class="toggle-container">
-                    <div class="toggle-label">Authorization URL</div>
-                    <label class="toggle-switch" for="urlType" aria-label="Switch between Authorization URL and Admin Consent URL">
-                        <input type="checkbox" id="urlType">
-                        <span class="toggle-slider"></span>
-                    </label>
-                    <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-admin-consent" target="_blank" rel="noopener noreferrer" class="toggle-label-link">Admin Consent URL</a>
+                <!-- URL Type Button Selectors -->
+                <div class="url-type-container">
+                    <div class="url-type-option active" id="authUrlOption" data-type="auth">
+                        <div class="url-type-title">
+                            Authorization URL
+                            <div class="help-icon">
+                                <i data-lucide="help-circle"></i>
+                                <div class="help-tooltip">
+                                    User sign-in flow for accessing resources - <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow" target="_blank" rel="noopener noreferrer" class="url-type-link">Learn more</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="url-type-description">
+                            Generate URLs for user authentication and authorization to access resources on their behalf
+                        </div>
+                    </div>
+                    
+                    <div class="url-type-option" id="adminConsentOption" data-type="admin_consent">
+                        <div class="url-type-title">
+                            Admin Consent URL
+                            <div class="help-icon">
+                                <i data-lucide="help-circle"></i>
+                                <div class="help-tooltip">
+                                    Tenant-wide permission grants for applications - <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-admin-consent" target="_blank" rel="noopener noreferrer" class="url-type-link">Learn more</a>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="url-type-description">
+                            Generate URLs for administrators to grant tenant-wide permissions to applications
+                        </div>
+                    </div>
                 </div>
+                
+                <!-- Hidden input to maintain compatibility with existing JavaScript -->
+                <input type="checkbox" id="urlType" class="hidden-input">
                 
                 <div class="space-y-4">
                     <div class="flex items-center gap-2 mb-4">
@@ -5864,6 +5923,18 @@ const GRAPH_PERMISSIONS = [
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
             
+            // Update button selectors to show selected state
+            const authUrlOption = document.getElementById('authUrlOption');
+            const adminConsentOption = document.getElementById('adminConsentOption');
+            
+            if (isAdminConsent) {
+                authUrlOption.classList.remove('active');
+                adminConsentOption.classList.add('active');
+            } else {
+                authUrlOption.classList.add('active');
+                adminConsentOption.classList.remove('active');
+            }
+            
             // Fields to hide for admin consent
             const fieldsToHide = [
                 document.querySelector('[for="responseType"]').closest('.space-y-2'), // Response Type field
@@ -5949,6 +6020,21 @@ const GRAPH_PERMISSIONS = [
 
         // Event listener for URL type change
         urlType.addEventListener('change', toggleUrlTypeFields);
+        
+        // Event listeners for button-style selectors
+        document.getElementById('authUrlOption').addEventListener('click', () => {
+            if (urlType.checked) {
+                urlType.checked = false;
+                toggleUrlTypeFields();
+            }
+        });
+        
+        document.getElementById('adminConsentOption').addEventListener('click', () => {
+            if (!urlType.checked) {
+                urlType.checked = true;
+                toggleUrlTypeFields();
+            }
+        });
         
         // Event listener for baseUrlType change
         baseUrlType.addEventListener('change', toggleTenantIdField);

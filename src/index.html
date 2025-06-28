@@ -5923,10 +5923,10 @@ const GRAPH_PERMISSIONS = [
             // Add permission to scope textarea
             function addPermissionToScope(permission) {
                 const currentScopes = scopeInput.value.trim();
-                const newScope = `https://graph.microsoft.com/${permission.name}`;
+                const newScope = permission.name;
                 
-                // Check if permission already exists
-                if (currentScopes.includes(newScope)) {
+                // Check if permission already exists (check for both formats)
+                if (currentScopes.includes(newScope) || currentScopes.includes(`https://graph.microsoft.com/${newScope}`)) {
                     showMessage('Permission already added to scope', 'warning');
                     return;
                 }

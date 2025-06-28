@@ -537,6 +537,24 @@
                 <!-- Hidden input to maintain compatibility with existing JavaScript -->
                 <input type="checkbox" id="urlType" class="hidden-input">
                 
+                <!-- Real-time Generated URL Section -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="link" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Generated URL</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Fill in the required fields below to see your generated URL..."></textarea>
+                        <button type="button" id="copyUrl" class="button button-primary w-full">
+                            <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
+                            Copy URL to Clipboard
+                        </button>
+                    </div>
+                    
+                    <div id="messageBox" class="mt-4 hidden"></div>
+                </div>
+                
                 <div class="space-y-4">
                     <div class="flex items-center gap-2 mb-4">
                         <i data-lucide="globe" class="w-4 h-4 text-gray-600"></i>
@@ -686,10 +704,6 @@
                         <i data-lucide="refresh-cw" class="w-4 h-4 mr-2"></i>
                         Clear Form
                     </button>
-                    <button type="submit" class="button button-primary">
-                        <i data-lucide="link" class="w-4 h-4 mr-2"></i>
-                        Generate URL
-                    </button>
                 </div>
                 </form>
                 </div>
@@ -746,24 +760,6 @@
                 </div>
                 </div>
             </div>
-        </div>
-
-        <!-- Result Section -->
-        <div class="card p-8 mt-8">
-            <div class="flex items-center gap-2 mb-4">
-                <i data-lucide="copy" class="w-4 h-4 text-gray-600"></i>
-                <h2 class="text-lg font-semibold text-gray-900">Generated Sign-in URL</h2>
-            </div>
-            
-            <div class="space-y-4">
-                <textarea id="generatedUrl" rows="6" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here..."></textarea>
-                <button id="copyUrl" class="button button-primary w-full">
-                    <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
-                    Copy URL to Clipboard
-                </button>
-            </div>
-            
-            <div id="messageBox" class="mt-4 hidden"></div>
         </div>
 
     </div>
@@ -832,7 +828,7 @@
             {
                 "@type": "HowToStep",
                 "name": "Generate and Copy URL",
-                "text": "Click Generate URL button and copy the resulting authorization URL to your clipboard"
+                "text": "The URL is generated automatically as you fill in the fields. Copy the resulting authorization URL to your clipboard"
             }
         ]
     }
@@ -5818,6 +5814,9 @@ const GRAPH_PERMISSIONS = [
                 const updatedScopes = currentScopes ? `${currentScopes} ${newScope}` : newScope;
                 scopeInput.value = updatedScopes;
                 
+                // Update URL in real-time
+                generateUrlRealTime();
+                
                 // Show success message and close modal
                 showMessage(`Added permission: ${permission.name}`, 'success');
                 closeModal();
@@ -6016,13 +6015,17 @@ const GRAPH_PERMISSIONS = [
         }
 
         // Event listener for URL type change
-        urlType.addEventListener('change', toggleUrlTypeFields);
+        urlType.addEventListener('change', () => {
+            toggleUrlTypeFields();
+            generateUrlRealTime();
+        });
         
         // Event listeners for button-style selectors
         document.getElementById('authUrlOption').addEventListener('click', () => {
             if (urlType.checked) {
                 urlType.checked = false;
                 toggleUrlTypeFields();
+                generateUrlRealTime();
             }
         });
         
@@ -6030,11 +6033,15 @@ const GRAPH_PERMISSIONS = [
             if (!urlType.checked) {
                 urlType.checked = true;
                 toggleUrlTypeFields();
+                generateUrlRealTime();
             }
         });
         
         // Event listener for baseUrlType change
-        baseUrlType.addEventListener('change', toggleTenantIdField);
+        baseUrlType.addEventListener('change', () => {
+            toggleTenantIdField();
+            generateUrlRealTime();
+        });
         
         // Event listener for optional parameters toggle
         toggleOptionalParamsButton.addEventListener('click', toggleOptionalParams);
@@ -6071,10 +6078,9 @@ const GRAPH_PERMISSIONS = [
         }
 
         // Function to generate the Entra sign-in URL or admin consent URL
-        function generateUrl(event) {
-            event.preventDefault(); // Prevent default form submission
-
-            const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
+        // Function to generate URL in real-time
+        function generateUrlRealTime() {
+            const isAdminConsent = urlType.checked;
             
             // Base URL construction
             let baseUrl = '';
@@ -6085,17 +6091,17 @@ const GRAPH_PERMISSIONS = [
                 switch (baseUrlType.value) {
                     case 'specific':
                         if (!tenantId) {
-                            showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
-                            return;
+                            baseUrl = `https://login.microsoftonline.com/{tenant-id}/v2.0/adminconsent`;
+                        } else {
+                            baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/v2.0/adminconsent`;
                         }
-                        baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/v2.0/adminconsent`;
                         break;
                     case 'common':
                         baseUrl = `https://login.microsoftonline.com/common/v2.0/adminconsent`;
                         break;
                     case 'consumers':
-                        showMessage('Admin consent is not supported for consumer accounts.', 'error');
-                        return;
+                        baseUrl = `https://login.microsoftonline.com/consumers/v2.0/adminconsent`;
+                        break;
                     case 'organizations':
                         baseUrl = `https://login.microsoftonline.com/organizations/v2.0/adminconsent`;
                         break;
@@ -6105,10 +6111,10 @@ const GRAPH_PERMISSIONS = [
                 switch (baseUrlType.value) {
                     case 'specific':
                         if (!tenantId) {
-                            showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
-                            return;
+                            baseUrl = `https://login.microsoftonline.com/{tenant-id}/oauth2/v2.0/authorize`;
+                        } else {
+                            baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
                         }
-                        baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
                         break;
                     case 'common':
                         baseUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`;
@@ -6127,42 +6133,30 @@ const GRAPH_PERMISSIONS = [
             const redirectUri = redirectUriInput.value.trim();
             const scope = scopeInput.value.trim();
 
-            // Validate required fields
-            if (!clientId) {
-                showMessage('Client ID is required.', 'error');
-                return;
-            }
-
-            if (isAdminConsent) {
-                // Admin consent validation: tenant ID, client ID, redirect URI, and scope are required
-                if (baseUrlType.value === 'specific' && !tenantId) {
-                    showMessage('Tenant ID is required for admin consent with specific tenant.', 'error');
-                    return;
-                }
-                if (!redirectUri) {
-                    showMessage('Redirect URI is required for admin consent URLs.', 'error');
-                    return;
-                }
-                if (!scope) {
-                    showMessage('Scope is required for admin consent URLs.', 'error');
-                    return;
-                }
-            } else {
-                // Regular authorization validation
-                if (!redirectUri || !scope) {
-                    showMessage('Client ID, Redirect URI, and Scope are required fields for authorization URLs.', 'error');
-                    return;
-                }
-            }
-
             // Construct query parameters
             const params = new URLSearchParams();
-            params.append('client_id', clientId);
+            
+            // Add client_id (always required)
+            if (clientId) {
+                params.append('client_id', clientId);
+            } else {
+                params.append('client_id', '{client-id}');
+            }
 
             if (isAdminConsent) {
-                // Admin consent specific parameters - all are required except state
-                params.append('redirect_uri', redirectUri);
-                params.append('scope', scope);
+                // Admin consent specific parameters
+                if (redirectUri) {
+                    params.append('redirect_uri', redirectUri);
+                } else {
+                    params.append('redirect_uri', '{redirect-uri}');
+                }
+                
+                if (scope) {
+                    params.append('scope', scope);
+                } else {
+                    params.append('scope', '{scope}');
+                }
+                
                 if (adminConsentState.value.trim()) {
                     params.append('state', adminConsentState.value.trim());
                 }
@@ -6170,8 +6164,18 @@ const GRAPH_PERMISSIONS = [
                 // Regular authorization parameters
                 const responseType = responseTypeSelect.value;
                 params.append('response_type', responseType);
-                params.append('redirect_uri', redirectUri);
-                params.append('scope', scope);
+                
+                if (redirectUri) {
+                    params.append('redirect_uri', redirectUri);
+                } else {
+                    params.append('redirect_uri', '{redirect-uri}');
+                }
+                
+                if (scope) {
+                    params.append('scope', scope);
+                } else {
+                    params.append('scope', '{scope}');
+                }
 
                 // Add optional parameters if they have values
                 if (stateInput.value.trim()) {
@@ -6197,8 +6201,6 @@ const GRAPH_PERMISSIONS = [
             // Combine base URL and parameters
             const fullUrl = `${baseUrl}?${params.toString()}`;
             generatedUrlTextarea.value = fullUrl;
-            const urlTypeText = isAdminConsent ? 'Admin consent URL' : 'Authorization URL';
-            showMessage(`${urlTypeText} generated successfully!`, 'success');
         }
 
         // Function to copy the generated URL to clipboard
@@ -6219,11 +6221,43 @@ const GRAPH_PERMISSIONS = [
             generatedUrlTextarea.value = ''; // Clear the generated URL
             toggleTenantIdField(); // Reset tenant ID field visibility
             toggleUrlTypeFields(); // Reset URL type fields
+            generateUrlRealTime(); // Regenerate URL after clearing
             showMessage('Form cleared.', 'info');
         }
 
+        // Event listeners for real-time URL generation
+        function addRealTimeListeners() {
+            // Add event listeners to all form inputs for real-time updates
+            const formInputs = [
+                tenantIdInput,
+                clientIdInput,
+                redirectUriInput,
+                scopeInput,
+                responseTypeSelect,
+                stateInput,
+                nonceInput,
+                responseModeSelect,
+                promptSelect,
+                loginHintInput,
+                domainHintInput,
+                adminConsentState,
+                baseUrlType,
+                urlType
+            ];
+            
+            formInputs.forEach(input => {
+                if (input) {
+                    if (input.type === 'checkbox') {
+                        input.addEventListener('change', generateUrlRealTime);
+                    } else {
+                        input.addEventListener('input', generateUrlRealTime);
+                        input.addEventListener('change', generateUrlRealTime);
+                    }
+                }
+            });
+        }
+        
         // Event listeners
-        urlForm.addEventListener('submit', generateUrl);
         copyUrlButton.addEventListener('click', copyUrlToClipboard);
         clearFormButton.addEventListener('click', clearForm);
 
@@ -6245,6 +6279,10 @@ const GRAPH_PERMISSIONS = [
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+            
+            // Add real-time listeners and generate initial URL
+            addRealTimeListeners();
+            generateUrlRealTime();
         });
 
     </script>

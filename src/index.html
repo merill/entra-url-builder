@@ -225,6 +225,10 @@
             border-color: hsl(var(--primary) / 0.2);
             color: hsl(var(--primary));
         }
+        
+        .field-hidden {
+            display: none !important;
+        }
     </style>
 </head>
 <body>
@@ -254,6 +258,15 @@
                     
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div class="space-y-2">
+                            <label for="urlType" class="label">URL Type</label>
+                            <select id="urlType" class="select">
+                                <option value="auth">Authorization URL (User Sign-in)</option>
+                                <option value="admin_consent">Admin Consent URL</option>
+                            </select>
+                            <p class="text-xs text-gray-500">Choose whether to generate a user authorization URL for sign-in or an admin consent URL for tenant-wide permissions</p>
+                        </div>
+                        
+                        <div class="space-y-2">
                             <label for="baseUrlType" class="label">Base URL Type</label>
                             <select id="baseUrlType" class="select">
                                 <option value="specific">Specific Tenant</option>
@@ -261,12 +274,13 @@
                                 <option value="consumers">Microsoft Accounts (consumers)</option>
                                 <option value="organizations">Work/School & Personal (organizations)</option>
                             </select>
+                            <p class="text-xs text-gray-500">Choose the authentication endpoint: specific tenant for single organization, common for multi-tenant apps, consumers for personal Microsoft accounts only, or organizations for work/school accounts from any organization</p>
                         </div>
                         
                         <div class="space-y-2" id="tenantIdField">
                             <label for="tenantId" class="label">Tenant ID or Name</label>
                             <input type="text" id="tenantId" class="input" placeholder="e.g., yourcompany.onmicrosoft.com or tenant-id">
-                            <p class="text-xs text-gray-500">Your Entra ID tenant identifier</p>
+                            <p class="text-xs text-gray-500">Your Entra ID tenant identifier - can be the tenant GUID, domain name (contoso.onmicrosoft.com), or verified custom domain (contoso.com)</p>
                         </div>
                     </div>
                 </div>
@@ -285,7 +299,7 @@
                                 <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="clientId" class="input" placeholder="Required" required>
-                            <p class="text-xs text-gray-500">Application ID from Azure portal</p>
+                            <p class="text-xs text-gray-500">Unique identifier for your application, found in Entra portal under <a href="https://enappreg.cmd.ms" target="_blank">App registrations</a> → Your app → Overview. Also called Application (client) ID</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -294,7 +308,7 @@
                                 <span class="text-red-500">*</span>
                             </label>
                             <input type="url" id="redirectUri" class="input" placeholder="e.g., http://localhost:3000/callback" required>
-                            <p class="text-xs text-gray-500">Where users will be redirected after authentication</p>
+                            <p class="text-xs text-gray-500" id="redirectUriHelp">Where users are sent after authentication. Must exactly match a URI configured in your app registration's Authentication settings</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -303,7 +317,7 @@
                                 <span class="text-red-500">*</span>
                             </label>
                             <input type="text" id="scope" class="input" value="openid profile email offline_access https://graph.microsoft.com/User.Read" placeholder="Required">
-                            <p class="text-xs text-gray-500">Permissions your app is requesting</p>
+                            <p class="text-xs text-gray-500" id="scopeHelp">Permissions your app requests. Include 'openid' for OIDC, 'profile' for user info, 'email' for email claims, 'offline_access' for refresh tokens, plus any API scopes</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -313,29 +327,42 @@
                                 <option value="id_token">id_token (Implicit Flow)</option>
                                 <option value="code id_token">code id_token</option>
                             </select>
-                            <p class="text-xs text-gray-500">OAuth 2.0 flow type</p>
+                            <p class="text-xs text-gray-500" id="responseTypeHelp">Determines what is returned: 'code' for authorization code (most secure), 'id_token' for immediate token (less secure), or both for hybrid flows</p>
+                        </div>
+
+                        <!-- Admin Consent specific fields -->
+                        <div class="space-y-2 field-hidden" id="adminConsentFields">
+                            <label for="adminConsentState" class="label">State (for Admin Consent)</label>
+                            <input type="text" id="adminConsentState" class="input" placeholder="Optional state parameter">
+                            <p class="text-xs text-gray-500">Optional state parameter that will be returned after admin consent is granted</p>
                         </div>
                     </div>
                 </div>
 
                 <!-- Optional Parameters -->
                 <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-600"></i>
-                        <h2 class="text-lg font-semibold text-gray-900">Optional Parameters</h2>
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="sliders-horizontal" class="w-4 h-4 text-gray-600"></i>
+                            <h2 class="text-lg font-semibold text-gray-900">Optional Parameters</h2>
+                        </div>
+                        <button type="button" id="toggleOptionalParams" class="button button-secondary text-sm py-1 px-2 h-auto">
+                            <i data-lucide="chevron-down" class="w-4 h-4 mr-1" id="optionalParamsIcon"></i>
+                            <span id="optionalParamsText">Show</span>
+                        </button>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 field-hidden" id="optionalParamsSection">
                         <div class="space-y-2">
                             <label for="state" class="label">State</label>
                             <input type="text" id="state" class="input" placeholder="Optional (for CSRF protection)">
-                            <p class="text-xs text-gray-500">CSRF protection parameter</p>
+                            <p class="text-xs text-gray-500">Random value to prevent CSRF attacks. Azure AD returns this exact value in the response, allowing your app to verify the request authenticity</p>
                         </div>
                         
                         <div class="space-y-2">
                             <label for="nonce" class="label">Nonce</label>
                             <input type="text" id="nonce" class="input" placeholder="Optional (for replay protection)">
-                            <p class="text-xs text-gray-500">Replay attack protection</p>
+                            <p class="text-xs text-gray-500">Random value included in ID tokens to prevent replay attacks. Must be unique for each authentication request to ensure token freshness</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -345,6 +372,7 @@
                                 <option value="query">query</option>
                                 <option value="fragment">fragment</option>
                             </select>
+                            <p class="text-xs text-gray-500">How the authorization response is returned: form_post (HTTP POST to redirect URI), query (URL parameters), or fragment (URL hash for SPAs)</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -356,18 +384,19 @@
                                 <option value="login">login</option>
                                 <option value="none">none (silent)</option>
                             </select>
+                            <p class="text-xs text-gray-500">Controls user interaction: none (default), select_account (show account picker), consent (force consent screen), login (force re-authentication), none (silent auth)</p>
                         </div>
                         
                         <div class="space-y-2">
                             <label for="loginHint" class="label">Login Hint</label>
                             <input type="text" id="loginHint" class="input" placeholder="user@example.com">
-                            <p class="text-xs text-gray-500">Pre-fill username</p>
+                            <p class="text-xs text-gray-500">Pre-populate the username field on the sign-in page. Useful when you know the user's email or username in advance</p>
                         </div>
                         
                         <div class="space-y-2">
                             <label for="domainHint" class="label">Domain Hint</label>
                             <input type="text" id="domainHint" class="input" placeholder="contoso.com">
-                            <p class="text-xs text-gray-500">Direct to specific domain</p>
+                            <p class="text-xs text-gray-500">Skip the home realm discovery page and send user directly to their federated identity provider (e.g., ADFS) for the specified domain</p>
                         </div>
                     </div>
                 </div>
@@ -411,11 +440,12 @@
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
                     <div>
                         <h3 class="font-medium text-gray-900 mb-2">What is this tool?</h3>
-                        <p class="mb-4">The Entra Sign-in URL Builder is a free online tool that helps developers generate Microsoft Entra ID OAuth 2.0 authorization URLs. This tool simplifies the process of creating properly formatted sign-in URLs for various authentication scenarios.</p>
+                        <p class="mb-4">The Entra Sign-in URL Builder is a free online tool that helps developers generate Microsoft Entra ID OAuth 2.0 authorization URLs and admin consent URLs. This tool simplifies the process of creating properly formatted sign-in URLs for various authentication scenarios and tenant-wide consent flows.</p>
                         
                         <h3 class="font-medium text-gray-900 mb-2">Key Features</h3>
                         <ul class="list-disc list-inside space-y-1 mb-4">
                             <li>Support for single-tenant, multi-tenant, and consumer flows</li>
+                            <li>Admin consent URL generation for tenant-wide permissions</li>
                             <li>Customizable OAuth 2.0 parameters</li>
                             <li>CSRF and replay protection with state and nonce generation</li>
                             <li>Copy-to-clipboard functionality</li>
@@ -435,6 +465,7 @@
                             <li>Testing Microsoft Graph API integrations</li>
                             <li>Debugging Entra ID authentication issues</li>
                             <li>Creating sign-in links for applications</li>
+                            <li>Generating admin consent URLs for tenant-wide permissions</li>
                             <li>Learning OAuth 2.0 and OpenID Connect flows</li>
                             <li>Rapid prototyping of authentication workflows</li>
                         </ul>
@@ -447,6 +478,7 @@
                         <li>• Always use HTTPS redirect URIs in production environments</li>
                         <li>• Include appropriate scopes based on your application's requirements</li>
                         <li>• Use the state parameter to prevent CSRF attacks</li>
+                        <li>• For admin consent, use .default scope to request all configured permissions</li>
                         <li>• Test with different tenant types to ensure compatibility</li>
                     </ul>
                 </div>
@@ -489,6 +521,7 @@
     <script>
         // Get references to DOM elements
         const urlForm = document.getElementById('urlForm');
+        const urlType = document.getElementById('urlType');
         const baseUrlType = document.getElementById('baseUrlType');
         const tenantIdField = document.getElementById('tenantIdField');
         const tenantIdInput = document.getElementById('tenantId');
@@ -502,10 +535,79 @@
         const promptSelect = document.getElementById('prompt');
         const loginHintInput = document.getElementById('loginHint');
         const domainHintInput = document.getElementById('domainHint');
+        const adminConsentFields = document.getElementById('adminConsentFields');
+        const adminConsentState = document.getElementById('adminConsentState');
         const generatedUrlTextarea = document.getElementById('generatedUrl');
         const copyUrlButton = document.getElementById('copyUrl');
         const clearFormButton = document.getElementById('clearForm');
         const messageBox = document.getElementById('messageBox');
+        const toggleOptionalParamsButton = document.getElementById('toggleOptionalParams');
+        const optionalParamsSection = document.getElementById('optionalParamsSection');
+        const optionalParamsIcon = document.getElementById('optionalParamsIcon');
+        const optionalParamsText = document.getElementById('optionalParamsText');
+
+        // Function to toggle optional parameters visibility
+        function toggleOptionalParams() {
+            const isHidden = optionalParamsSection.classList.contains('field-hidden');
+            
+            if (isHidden) {
+                optionalParamsSection.classList.remove('field-hidden');
+                optionalParamsIcon.setAttribute('data-lucide', 'chevron-up');
+                optionalParamsText.textContent = 'Hide';
+            } else {
+                optionalParamsSection.classList.add('field-hidden');
+                optionalParamsIcon.setAttribute('data-lucide', 'chevron-down');
+                optionalParamsText.textContent = 'Show';
+            }
+            
+            // Reinitialize Lucide icons for the updated icon
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+        }
+
+        // Function to toggle fields based on URL type
+        function toggleUrlTypeFields() {
+            const isAdminConsent = urlType.value === 'admin_consent';
+            
+            if (isAdminConsent) {
+                // Show admin consent fields
+                adminConsentFields.classList.remove('field-hidden');
+                
+                // Update help text for admin consent
+                document.getElementById('redirectUriHelp').textContent = 'Optional redirect URI for admin consent callback. If not provided, admin will be redirected to the app registration portal';
+                document.getElementById('scopeHelp').textContent = 'API permissions that require admin consent. Use space-separated scopes like https://graph.microsoft.com/.default';
+                document.getElementById('responseTypeHelp').textContent = 'Not used for admin consent URLs, but kept for consistency';
+                
+                // Update labels
+                document.querySelector('label[for="redirectUri"] span').style.display = 'none'; // Hide required asterisk
+                document.querySelector('label[for="scope"] span').style.display = 'none'; // Hide required asterisk
+                redirectUriInput.removeAttribute('required');
+                
+                // Set default scope for admin consent
+                if (scopeInput.value === 'openid profile email offline_access https://graph.microsoft.com/User.Read') {
+                    scopeInput.value = 'https://graph.microsoft.com/.default';
+                }
+            } else {
+                // Hide admin consent fields
+                adminConsentFields.classList.add('field-hidden');
+                
+                // Restore original help text
+                document.getElementById('redirectUriHelp').textContent = 'Where users are sent after authentication. Must exactly match a URI configured in your app registration\'s Authentication settings';
+                document.getElementById('scopeHelp').textContent = 'Permissions your app requests. Include \'openid\' for OIDC, \'profile\' for user info, \'email\' for email claims, \'offline_access\' for refresh tokens, plus any API scopes';
+                document.getElementById('responseTypeHelp').textContent = 'Determines what is returned: \'code\' for authorization code (most secure), \'id_token\' for immediate token (less secure), or both for hybrid flows';
+                
+                // Restore required fields
+                document.querySelector('label[for="redirectUri"] span').style.display = 'inline'; // Show required asterisk
+                document.querySelector('label[for="scope"] span').style.display = 'inline'; // Show required asterisk
+                redirectUriInput.setAttribute('required', 'true');
+                
+                // Restore default scope for auth
+                if (scopeInput.value === 'https://graph.microsoft.com/.default') {
+                    scopeInput.value = 'openid profile email offline_access https://graph.microsoft.com/User.Read';
+                }
+            }
+        }
 
         // Function to show/hide tenantId field based on baseUrlType
         function toggleTenantIdField() {
@@ -519,10 +621,20 @@
             }
         }
 
+        // Event listener for URL type change
+        urlType.addEventListener('change', toggleUrlTypeFields);
+        
         // Event listener for baseUrlType change
         baseUrlType.addEventListener('change', toggleTenantIdField);
+        
+        // Event listener for optional parameters toggle
+        toggleOptionalParamsButton.addEventListener('click', toggleOptionalParams);
+        
         // Initial call to set correct visibility on load
-        document.addEventListener('DOMContentLoaded', toggleTenantIdField);
+        document.addEventListener('DOMContentLoaded', function() {
+            toggleTenantIdField();
+            toggleUrlTypeFields();
+        });
 
         // Function to display messages to the user
         function showMessage(message, type = 'info') {
@@ -544,75 +656,127 @@
             }, 3000); // Hide message after 3 seconds
         }
 
-        // Function to generate the Entra sign-in URL
+        // Function to generate the Entra sign-in URL or admin consent URL
         function generateUrl(event) {
             event.preventDefault(); // Prevent default form submission
 
+            const isAdminConsent = urlType.value === 'admin_consent';
+            
             // Base URL construction
             let baseUrl = '';
             const tenantId = tenantIdInput.value.trim();
-            switch (baseUrlType.value) {
-                case 'specific':
-                    if (!tenantId) {
-                        showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
+            
+            if (isAdminConsent) {
+                // Admin consent URLs
+                switch (baseUrlType.value) {
+                    case 'specific':
+                        if (!tenantId) {
+                            showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
+                            return;
+                        }
+                        baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/v2.0/adminconsent`;
+                        break;
+                    case 'common':
+                        baseUrl = `https://login.microsoftonline.com/common/v2.0/adminconsent`;
+                        break;
+                    case 'consumers':
+                        showMessage('Admin consent is not supported for consumer accounts.', 'error');
                         return;
-                    }
-                    baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
-                    break;
-                case 'common':
-                    baseUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`;
-                    break;
-                case 'consumers':
-                    baseUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize`;
-                    break;
-                case 'organizations':
-                    baseUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize`;
-                    break;
+                    case 'organizations':
+                        baseUrl = `https://login.microsoftonline.com/organizations/v2.0/adminconsent`;
+                        break;
+                }
+            } else {
+                // Regular authorization URLs
+                switch (baseUrlType.value) {
+                    case 'specific':
+                        if (!tenantId) {
+                            showMessage('Please enter a Tenant ID or Name for "Specific Tenant" type.', 'error');
+                            return;
+                        }
+                        baseUrl = `https://login.microsoftonline.com/${encodeURIComponent(tenantId)}/oauth2/v2.0/authorize`;
+                        break;
+                    case 'common':
+                        baseUrl = `https://login.microsoftonline.com/common/oauth2/v2.0/authorize`;
+                        break;
+                    case 'consumers':
+                        baseUrl = `https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize`;
+                        break;
+                    case 'organizations':
+                        baseUrl = `https://login.microsoftonline.com/organizations/oauth2/v2.0/authorize`;
+                        break;
+                }
             }
 
             // Get essential parameters
             const clientId = clientIdInput.value.trim();
             const redirectUri = redirectUriInput.value.trim();
             const scope = scopeInput.value.trim();
-            const responseType = responseTypeSelect.value;
 
             // Validate required fields
-            if (!clientId || !redirectUri || !scope) {
-                showMessage('Client ID, Redirect URI, and Scope are required fields.', 'error');
+            if (!clientId) {
+                showMessage('Client ID is required.', 'error');
+                return;
+            }
+
+            if (!isAdminConsent && (!redirectUri || !scope)) {
+                showMessage('Client ID, Redirect URI, and Scope are required fields for authorization URLs.', 'error');
+                return;
+            }
+
+            if (isAdminConsent && !scope) {
+                showMessage('Client ID and Scope are required for admin consent URLs.', 'error');
                 return;
             }
 
             // Construct query parameters
             const params = new URLSearchParams();
             params.append('client_id', clientId);
-            params.append('response_type', responseType);
-            params.append('redirect_uri', redirectUri);
-            params.append('scope', scope);
 
-            // Add optional parameters if they have values
-            if (stateInput.value.trim()) {
-                params.append('state', stateInput.value.trim());
-            }
-            if (nonceInput.value.trim()) {
-                params.append('nonce', nonceInput.value.trim());
-            }
-            if (responseModeSelect.value) {
-                params.append('response_mode', responseModeSelect.value);
-            }
-            if (promptSelect.value) {
-                params.append('prompt', promptSelect.value);
-            }
-            if (loginHintInput.value.trim()) {
-                params.append('login_hint', loginHintInput.value.trim());
-            }
-            if (domainHintInput.value.trim()) {
-                params.append('domain_hint', domainHintInput.value.trim());
+            if (isAdminConsent) {
+                // Admin consent specific parameters
+                if (redirectUri) {
+                    params.append('redirect_uri', redirectUri);
+                }
+                if (scope) {
+                    params.append('scope', scope);
+                }
+                if (adminConsentState.value.trim()) {
+                    params.append('state', adminConsentState.value.trim());
+                }
+            } else {
+                // Regular authorization parameters
+                const responseType = responseTypeSelect.value;
+                params.append('response_type', responseType);
+                params.append('redirect_uri', redirectUri);
+                params.append('scope', scope);
+
+                // Add optional parameters if they have values
+                if (stateInput.value.trim()) {
+                    params.append('state', stateInput.value.trim());
+                }
+                if (nonceInput.value.trim()) {
+                    params.append('nonce', nonceInput.value.trim());
+                }
+                if (responseModeSelect.value) {
+                    params.append('response_mode', responseModeSelect.value);
+                }
+                if (promptSelect.value) {
+                    params.append('prompt', promptSelect.value);
+                }
+                if (loginHintInput.value.trim()) {
+                    params.append('login_hint', loginHintInput.value.trim());
+                }
+                if (domainHintInput.value.trim()) {
+                    params.append('domain_hint', domainHintInput.value.trim());
+                }
             }
 
             // Combine base URL and parameters
             const fullUrl = `${baseUrl}?${params.toString()}`;
             generatedUrlTextarea.value = fullUrl;
-            showMessage('URL generated successfully!', 'success');
+            const urlTypeText = isAdminConsent ? 'Admin consent URL' : 'Authorization URL';
+            showMessage(`${urlTypeText} generated successfully!`, 'success');
         }
 
         // Function to copy the generated URL to clipboard
@@ -632,6 +796,7 @@
             urlForm.reset(); // Resets all form fields to their initial state
             generatedUrlTextarea.value = ''; // Clear the generated URL
             toggleTenantIdField(); // Reset tenant ID field visibility
+            toggleUrlTypeFields(); // Reset URL type fields
             showMessage('Form cleared.', 'info');
         }
 

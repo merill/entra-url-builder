@@ -193,6 +193,38 @@
             box-shadow: 0 0 0 2px hsl(var(--ring) / 0.2);
         }
         
+        /* Animated glowing border wrapper for generated URL textarea */
+        .generated-url-wrapper {
+            position: relative;
+            padding: 3px;
+            border-radius: calc(var(--radius) + 3px);
+            background: linear-gradient(45deg, 
+                #3b82f6, #8b5cf6, #06b6d4, #10b981, 
+                #f59e0b, #ef4444, #ec4899, #3b82f6);
+            background-size: 400% 400%;
+            animation: glow-border 3s ease-in-out infinite;
+        }
+        
+        #generatedUrl {
+            border: none !important;
+            border-radius: var(--radius);
+            background: #ffffff;
+            margin: 0;
+        }
+        
+        @keyframes glow-border {
+            0%, 100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+        
+        .generated-url-wrapper:hover {
+            animation-duration: 2s;
+        }
+        
         .label {
             font-size: 0.875rem;
             font-weight: 500;
@@ -545,7 +577,9 @@
                     </div>
                     
                     <div class="space-y-4">
-                        <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Fill in the required fields below to see your generated URL..."></textarea>
+                        <div class="generated-url-wrapper">
+                            <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Fill in the required fields below to see your generated URL..."></textarea>
+                        </div>
                         <button type="button" id="copyUrl" class="button button-primary w-full">
                             <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
                             Copy URL to Clipboard

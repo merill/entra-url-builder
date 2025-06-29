@@ -572,6 +572,47 @@
         .hidden-input {
             display: none;
         }
+        
+        /* Scope Toggle Styles */
+        .scope-toggle {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.375rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .scope-toggle:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        .scope-toggle.active {
+            border-color: #10b981;
+            background-color: #ecfdf5;
+            color: #065f46;
+            box-shadow: 0 2px 4px rgba(16, 185, 129, 0.15);
+        }
+        
+        .scope-toggle.active::before {
+            content: '✓';
+            font-size: 0.75rem;
+            font-weight: bold;
+            color: #10b981;
+        }
+        
+        .scope-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
     </style>
 </head>
 <body>
@@ -789,14 +830,39 @@
                                 Scope (space-separated) 
                                 <span class="text-red-500">*</span>
                             </label>
+                            
+                            <!-- OpenID Connect Scope Toggles -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-sm font-medium text-gray-700">OIDC Scopes</span>
+                                    <button type="button" id="oidcScopesInfoBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Learn about OIDC scopes">
+                                        <i data-lucide="info" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="scope-toggle" data-scope="openid" title="Required for OpenID Connect authentication">
+                                        <span class="scope-name">openid</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle" data-scope="profile" title="Access to user's profile information (name, picture, etc.)">
+                                        <span class="scope-name">profile</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle" data-scope="email" title="Access to user's email address">
+                                        <span class="scope-name">email</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle" data-scope="offline_access" title="Request refresh tokens for long-lived access">
+                                        <span class="scope-name">offline_access</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
                             <div class="space-y-2">
-                                <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)"></textarea>
+                                <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)">openid</textarea>
                                 <button type="button" id="addGraphPermissionBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
                                     <i data-lucide="plus" class="w-4 h-4"></i>
                                     Add Graph Permission
                                 </button>
                             </div>
-                            <p class="text-xs text-gray-500" id="scopeHelp">Permissions your app requests. Include 'openid' for OIDC, 'profile' for user info, 'email' for email claims, 'offline_access' for refresh tokens, plus any API scopes</p>
+                            <p class="text-xs text-gray-500" id="scopeHelp">Use the quick toggles above for common OIDC scopes, or enter custom scopes in the text area. Scopes are space-separated permissions your app requests.</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -985,6 +1051,88 @@
             <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
                 <button type="button" id="cancelModalBtn" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                     Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OIDC Scopes Info Modal -->
+    <div id="oidcScopesModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">OpenID Connect (OIDC) Scopes</h3>
+                <button type="button" id="closeOidcModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close OIDC scopes info">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 mb-4">
+                        OpenID Connect (OIDC) scopes control what information your application can access about the authenticated user. Here's what each scope provides:
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-blue-100 px-2 py-1 rounded">openid</code>
+                                <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">Required</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Essential for OIDC:</strong> This scope is required for any OpenID Connect authentication flow. It tells the authorization server that the application wants to use OIDC to verify the user's identity. Without this scope, you won't receive an ID token.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-green-200 rounded-lg bg-green-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-green-100 px-2 py-1 rounded">profile</code>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Recommended</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>User Profile Information:</strong> Grants access to the user's basic profile information including name, family name, given name, preferred username, profile picture, and locale. This is commonly used for personalizing the user experience.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-purple-100 px-2 py-1 rounded">email</code>
+                                <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">Common</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Email Address:</strong> Provides access to the user's email address and email verification status. Essential for applications that need to contact users or use email for account management.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-orange-100 px-2 py-1 rounded">offline_access</code>
+                                <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">Optional</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Refresh Tokens:</strong> Allows your application to receive refresh tokens, enabling it to obtain new access tokens without requiring the user to sign in again. Use this for applications that need long-lived access to user data.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-2">💡 Best Practices</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• Always include <code class="font-mono">openid</code> for OIDC flows</li>
+                            <li>• Add <code class="font-mono">profile</code> for user personalization</li>
+                            <li>• Include <code class="font-mono">email</code> if you need to contact users</li>
+                            <li>• Only request <code class="font-mono">offline_access</code> if you need persistent access</li>
+                            <li>• Follow the principle of least privilege - only request scopes you actually need</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="closeOidcModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Got it!
                 </button>
             </div>
         </div>
@@ -6103,6 +6251,97 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // Setup scope toggle functionality
+        function setupScopeToggles() {
+            const scopeToggles = document.querySelectorAll('.scope-toggle');
+            const scopeInput = document.getElementById('scope');
+            
+            // Initialize toggle states based on current scope value
+            function updateToggleStates() {
+                const currentScopes = scopeInput.value.toLowerCase().split(/\s+/).filter(s => s.length > 0);
+                scopeToggles.forEach(toggle => {
+                    const scope = toggle.getAttribute('data-scope');
+                    if (currentScopes.includes(scope.toLowerCase())) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                });
+            }
+            
+            // Handle toggle clicks
+            scopeToggles.forEach(toggle => {
+                toggle.addEventListener('click', (e) => {
+                    e.preventDefault(); // Prevent any form submission
+                    e.stopPropagation(); // Stop event bubbling
+                    
+                    const scope = toggle.getAttribute('data-scope');
+                    const currentScopes = scopeInput.value.split(/\s+/).filter(s => s.length > 0);
+                    const scopeIndex = currentScopes.findIndex(s => s.toLowerCase() === scope.toLowerCase());
+                    
+                    if (scopeIndex > -1) {
+                        // Remove scope
+                        currentScopes.splice(scopeIndex, 1);
+                        toggle.classList.remove('active');
+                    } else {
+                        // Add scope
+                        currentScopes.push(scope);
+                        toggle.classList.add('active');
+                    }
+                    
+                    scopeInput.value = currentScopes.join(' ');
+                    generateUrlRealTime();
+                });
+            });
+            
+            // Update toggle states when scope input changes manually
+            scopeInput.addEventListener('input', updateToggleStates);
+            
+            // Initialize on page load
+            updateToggleStates();
+        }
+
+        // Setup OIDC Scopes Info Modal functionality
+        function setupOidcModal() {
+            const oidcInfoBtn = document.getElementById('oidcScopesInfoBtn');
+            const oidcModal = document.getElementById('oidcScopesModal');
+            const oidcCloseBtn = document.getElementById('closeOidcModalBtn');
+            const oidcCloseBtn2 = document.getElementById('closeOidcModalBtn2');
+            
+            // Open modal
+            function openOidcModal() {
+                oidcModal.classList.remove('hidden');
+                // Focus management for accessibility
+                oidcCloseBtn.focus();
+            }
+            
+            // Close modal
+            function closeOidcModal() {
+                oidcModal.classList.add('hidden');
+                // Return focus to the info button for accessibility
+                oidcInfoBtn.focus();
+            }
+            
+            // Event listeners
+            oidcInfoBtn.addEventListener('click', openOidcModal);
+            oidcCloseBtn.addEventListener('click', closeOidcModal);
+            oidcCloseBtn2.addEventListener('click', closeOidcModal);
+            
+            // Close modal when clicking outside
+            oidcModal.addEventListener('click', (e) => {
+                if (e.target === oidcModal) {
+                    closeOidcModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !oidcModal.classList.contains('hidden')) {
+                    closeOidcModal();
+                }
+            });
+        }
+
         // Function to toggle fields based on URL type
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
@@ -6251,7 +6490,6 @@ const GRAPH_PERMISSIONS = [
             
             toggleTenantIdField();
             toggleUrlTypeFields();
-            initializePermissionModal();
         });
 
         // Function to display messages to the user
@@ -6471,6 +6709,15 @@ const GRAPH_PERMISSIONS = [
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
             }
+            
+            // Setup Graph Permission modal
+            initializePermissionModal();
+            
+            // Setup scope toggles
+            setupScopeToggles();
+            
+            // Setup OIDC modal
+            setupOidcModal();
             
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();

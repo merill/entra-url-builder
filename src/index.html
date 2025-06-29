@@ -628,6 +628,27 @@
             color: #ea580c; /* Orange for refresh/offline */
         }
         
+        /* Individual Graph permission scope icon colors */
+        .scope-toggle[data-scope=".default"] .scope-icon {
+            color: #6b7280; /* Gray for default scope */
+        }
+        
+        .scope-toggle[data-scope="User.Read"] .scope-icon {
+            color: #059669; /* Green for user read */
+        }
+        
+        .scope-toggle[data-scope="Group.Read"] .scope-icon {
+            color: #0891b2; /* Cyan for groups */
+        }
+        
+        .scope-toggle[data-scope="Mail.Read"] .scope-icon {
+            color: #7c2d12; /* Brown for mail */
+        }
+        
+        .scope-toggle[data-scope="Files.Read"] .scope-icon {
+            color: #be185d; /* Pink for files */
+        }
+        
         .scope-name {
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             flex: 1;
@@ -878,12 +899,44 @@
                                 </div>
                             </div>
                             
+                            <!-- Graph Permission Scopes -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                <div class="flex items-center gap-2 mb-3">
+                                    <span class="text-sm font-medium text-gray-700">Graph Permission Scopes</span>
+                                    <button type="button" id="graphScopesInfoBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Learn about Graph permissions">
+                                        <i data-lucide="info" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                                <div class="flex flex-wrap gap-2 mb-3">
+                                    <button type="button" class="scope-toggle graph-scope-toggle" data-scope=".default" title="Default Graph permission scope">
+                                        <i data-lucide="globe" class="scope-icon"></i>
+                                        <span class="scope-name">.default</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle graph-scope-toggle" data-scope="User.Read" title="Read user profile information">
+                                        <i data-lucide="user-check" class="scope-icon"></i>
+                                        <span class="scope-name">User.Read</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle graph-scope-toggle" data-scope="Group.Read" title="Read group information">
+                                        <i data-lucide="users" class="scope-icon"></i>
+                                        <span class="scope-name">Group.Read</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle graph-scope-toggle" data-scope="Mail.Read" title="Read user's email messages">
+                                        <i data-lucide="inbox" class="scope-icon"></i>
+                                        <span class="scope-name">Mail.Read</span>
+                                    </button>
+                                    <button type="button" class="scope-toggle graph-scope-toggle" data-scope="Files.Read" title="Read user's files">
+                                        <i data-lucide="file-text" class="scope-icon"></i>
+                                        <span class="scope-name">Files.Read</span>
+                                    </button>
+                                </div>
+                                <button type="button" id="addGraphPermissionBtn" class="inline-flex items-center gap-2 px-3 py-1.5 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
+                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                    Add More Graph Permissions
+                                </button>
+                            </div>
+                            
                             <div class="space-y-2">
                                 <textarea id="scope" class="input min-h-[80px] resize-vertical" placeholder="Enter custom scopes (space-separated)">openid</textarea>
-                                <button type="button" id="addGraphPermissionBtn" class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors text-sm font-medium">
-                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                    Add Graph Permission
-                                </button>
                             </div>
                             <p class="text-xs text-gray-500" id="scopeHelp">Use the quick toggles above for common OIDC scopes, or enter custom scopes in the text area. Scopes are space-separated permissions your app requests.</p>
                         </div>
@@ -1039,6 +1092,106 @@
             </div>
         </div>
 
+    </div>
+
+    <!-- Graph Permission Scopes Info Modal -->
+    <div id="graphScopesModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">Microsoft Graph Permission Scopes</h3>
+                <button type="button" id="closeGraphModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close Graph scopes info">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 mb-4">
+                        Microsoft Graph permission scopes control what data your application can access from Microsoft 365 services. Here are the most commonly used permissions:
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="p-4 border border-gray-200 rounded-lg bg-gray-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-gray-100 px-2 py-1 rounded">.default</code>
+                                <span class="text-xs bg-gray-100 text-gray-700 px-2 py-1 rounded-full font-medium">Static Consent</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed mb-3">
+                                <strong>Default Scope:</strong> Used to refer generically to a resource service (API) without identifying specific permissions. If consent is necessary, using <code>.default</code> signals that consent should be prompted for all required permissions listed in the application registration.
+                            </p>
+                            <div class="p-3 bg-red-50 border border-red-200 rounded-md mb-3">
+                                <p class="text-sm text-red-700 font-medium">⚠️ Important Limitation</p>
+                                <p class="text-sm text-red-600">Clients can't combine static (<code>.default</code>) consent and dynamic consent in a single request. You cannot use <code>.default</code> with other specific Graph permissions.</p>
+                            </div>
+                            <p class="text-sm text-blue-600">
+                                <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope" target="_blank" rel="noopener noreferrer" class="hover:underline">
+                                    📖 Learn more about .default scope on Microsoft Learn
+                                </a>
+                            </p>
+                        </div>
+                        
+                        <div class="p-4 border border-green-200 rounded-lg bg-green-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-green-100 px-2 py-1 rounded">User.Read</code>
+                                <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Most Common</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Read User Profile:</strong> Allows your app to read the signed-in user's basic profile information, including display name, email, and profile photo. This is the most commonly requested Graph permission.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-cyan-200 rounded-lg bg-cyan-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-cyan-100 px-2 py-1 rounded">Group.Read</code>
+                                <span class="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full font-medium">User Groups</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Read User's Groups:</strong> Allows your app to read group information for groups the signed-in user is a member of. More limited than Group.Read.All which requires admin consent.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-amber-200 rounded-lg bg-amber-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-amber-100 px-2 py-1 rounded">Mail.Read</code>
+                                <span class="text-xs bg-amber-100 text-amber-700 px-2 py-1 rounded-full font-medium">Sensitive</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Read Email:</strong> Allows your app to read email messages in the signed-in user's mailbox. Users should understand this grants access to their email content.
+                            </p>
+                        </div>
+
+                        <div class="p-4 border border-pink-200 rounded-lg bg-pink-50">
+                            <div class="flex items-center gap-2 mb-2">
+                                <code class="text-sm font-mono bg-pink-100 px-2 py-1 rounded">Files.Read</code>
+                                <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded-full font-medium">User Files</span>
+                            </div>
+                            <p class="text-sm text-gray-700 leading-relaxed">
+                                <strong>Read User Files:</strong> Allows your app to read files that the signed-in user can access. More limited than Files.Read.All which requires admin consent for organization-wide access.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-2">🔒 Permission Considerations</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• <strong>Least Privilege:</strong> Only request permissions your app actually needs</li>
+                            <li>• <strong>Admin Consent:</strong> Some permissions require administrator approval</li>
+                            <li>• <strong>User Experience:</strong> Too many permissions can reduce user trust</li>
+                            <li>• <strong>Incremental Consent:</strong> Consider requesting permissions when needed, not all upfront</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="closeGraphModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Graph Permission Selector Modal -->
@@ -6279,6 +6432,55 @@ const GRAPH_PERMISSIONS = [
             const scopeToggles = document.querySelectorAll('.scope-toggle');
             const scopeInput = document.getElementById('scope');
             
+            // Create validation error element
+            const validationError = document.createElement('div');
+            validationError.id = 'scopeValidationError';
+            validationError.className = 'hidden mt-2 p-3 bg-red-50 border border-red-200 rounded-md';
+            validationError.innerHTML = `
+                <div class="flex items-start gap-2">
+                    <i data-lucide="alert-triangle" class="w-4 h-4 text-red-600 mt-0.5 flex-shrink-0"></i>
+                    <div>
+                        <p class="text-sm font-medium text-red-800">Scope Conflict Detected</p>
+                        <p class="text-sm text-red-700">The <code>.default</code> scope cannot be combined with other Graph permissions. Please use either <code>.default</code> for static consent or specific Graph permissions for dynamic consent, but not both.</p>
+                        <p class="text-sm text-red-600 mt-1">
+                            <a href="https://learn.microsoft.com/en-us/entra/identity-platform/scopes-oidc#the-default-scope" target="_blank" rel="noopener noreferrer" class="underline hover:no-underline">
+                                Learn more about .default scope limitations
+                            </a>
+                        </p>
+                    </div>
+                </div>
+            `;
+            
+            // Insert validation error after the textarea
+            scopeInput.parentNode.insertBefore(validationError, scopeInput.nextSibling);
+            
+            // Function to validate scope combinations
+            function validateScopesCombination() {
+                const currentScopes = scopeInput.value.toLowerCase().split(/\s+/).filter(s => s.length > 0);
+                const hasDefault = currentScopes.includes('.default') || currentScopes.includes('default') || currentScopes.includes('https://graph.microsoft.com/.default');
+                const hasOtherGraphScopes = currentScopes.some(scope => 
+                    scope !== '.default' && 
+                    scope !== 'default' && 
+                    scope !== 'https://graph.microsoft.com/.default' &&
+                    (scope.includes('user.') || scope.includes('group.') || scope.includes('mail.') || scope.includes('files.') ||
+                     scope.includes('User.') || scope.includes('Group.') || scope.includes('Mail.') || scope.includes('Files.') ||
+                     scope.includes('Directory.') || scope.includes('Calendars.') || scope.includes('Contacts.') ||
+                     scope.includes('Tasks.') || scope.includes('People.') || scope.includes('Notes.'))
+                );
+                
+                if (hasDefault && hasOtherGraphScopes) {
+                    validationError.classList.remove('hidden');
+                    // Re-initialize Lucide icons for the new alert triangle
+                    if (typeof lucide !== 'undefined') {
+                        lucide.createIcons();
+                    }
+                    return false;
+                } else {
+                    validationError.classList.add('hidden');
+                    return true;
+                }
+            }
+            
             // Initialize toggle states based on current scope value
             function updateToggleStates() {
                 const currentScopes = scopeInput.value.toLowerCase().split(/\s+/).filter(s => s.length > 0);
@@ -6290,6 +6492,9 @@ const GRAPH_PERMISSIONS = [
                         toggle.classList.remove('active');
                     }
                 });
+                
+                // Validate scope combinations
+                validateScopesCombination();
             }
             
             // Handle toggle clicks
@@ -6313,6 +6518,10 @@ const GRAPH_PERMISSIONS = [
                     }
                     
                     scopeInput.value = currentScopes.join(' ');
+                    
+                    // Validate scope combinations
+                    validateScopesCombination();
+                    
                     generateUrlRealTime();
                 });
             });
@@ -6361,6 +6570,47 @@ const GRAPH_PERMISSIONS = [
             document.addEventListener('keydown', (e) => {
                 if (e.key === 'Escape' && !oidcModal.classList.contains('hidden')) {
                     closeOidcModal();
+                }
+            });
+        }
+
+        // Setup Graph Scopes Info Modal functionality
+        function setupGraphModal() {
+            const graphInfoBtn = document.getElementById('graphScopesInfoBtn');
+            const graphModal = document.getElementById('graphScopesModal');
+            const graphCloseBtn = document.getElementById('closeGraphModalBtn');
+            const graphCloseBtn2 = document.getElementById('closeGraphModalBtn2');
+            
+            // Open modal
+            function openGraphModal() {
+                graphModal.classList.remove('hidden');
+                // Focus management for accessibility
+                graphCloseBtn.focus();
+            }
+            
+            // Close modal
+            function closeGraphModal() {
+                graphModal.classList.add('hidden');
+                // Return focus to the info button for accessibility
+                graphInfoBtn.focus();
+            }
+            
+            // Event listeners
+            graphInfoBtn.addEventListener('click', openGraphModal);
+            graphCloseBtn.addEventListener('click', closeGraphModal);
+            graphCloseBtn2.addEventListener('click', closeGraphModal);
+            
+            // Close modal when clicking outside
+            graphModal.addEventListener('click', (e) => {
+                if (e.target === graphModal) {
+                    closeGraphModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !graphModal.classList.contains('hidden')) {
+                    closeGraphModal();
                 }
             });
         }
@@ -6741,6 +6991,9 @@ const GRAPH_PERMISSIONS = [
             
             // Setup OIDC modal
             setupOidcModal();
+            
+            // Setup Graph modal
+            setupGraphModal();
             
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();

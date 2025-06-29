@@ -726,6 +726,63 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             flex: 1;
         }
+        
+        /* Response Mode Toggle Styles */
+        .response-mode-toggle {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            min-height: 2.5rem;
+        }
+        
+        .response-mode-toggle:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+        
+        .response-mode-toggle.active {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+            color: #1e40af;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            font-weight: 600;
+        }
+        
+        .response-mode-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        
+        /* Individual response mode icon colors */
+        .response-mode-toggle[data-response-mode="query"] .response-mode-icon {
+            color: #059669; /* Green for query parameters */
+        }
+        
+        .response-mode-toggle[data-response-mode="fragment"] .response-mode-icon {
+            color: #ea580c; /* Orange for URL fragment */
+        }
+        
+        .response-mode-toggle[data-response-mode="form_post"] .response-mode-icon {
+            color: #7c3aed; /* Purple for form post */
+        }
+        
+        .response-mode-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -1119,14 +1176,38 @@
                         </div>
                         
                         <div class="space-y-2">
-                            <label for="responseMode" class="label">Response Mode</label>
-                            <select id="responseMode" class="select">
-                                <option value="">Select response mode (optional)</option>
-                                <option value="form_post">form_post</option>
-                                <option value="query">query</option>
-                                <option value="fragment">fragment</option>
-                            </select>
-                            <p class="text-xs text-gray-500">How the authorization response is returned: form_post (HTTP POST to redirect URI), query (URL parameters), or fragment (URL hash for SPAs)</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <label class="label">Response Mode</label>
+                                <button type="button" id="responseModeInfoBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Learn about response modes">
+                                    <i data-lucide="info" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Response Mode Toggles -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="response-mode-toggle" data-response-mode="query" title="Query Parameters - Standard for web applications">
+                                        <i data-lucide="link" class="response-mode-icon"></i>
+                                        <span class="response-mode-name">query</span>
+                                    </button>
+                                    <button type="button" class="response-mode-toggle" data-response-mode="fragment" title="URL Fragment - For single-page applications">
+                                        <i data-lucide="hash" class="response-mode-icon"></i>
+                                        <span class="response-mode-name">fragment</span>
+                                    </button>
+                                    <button type="button" class="response-mode-toggle" data-response-mode="form_post" title="HTTP POST - Most secure for web applications">
+                                        <i data-lucide="send" class="response-mode-icon"></i>
+                                        <span class="response-mode-name">form_post</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input to store the selected response mode -->
+                            <input type="hidden" id="responseMode" value="">
+                            
+                            <div class="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <p class="font-medium mb-1" id="responseModeDescription">Select a response mode to see details about how the authorization response will be returned.</p>
+                                <p class="text-gray-500" id="responseModeRecommendation">Each mode has different security implications and use cases.</p>
+                            </div>
                         </div>
                         
                         <div class="space-y-2">
@@ -1587,6 +1668,117 @@
             <!-- Modal Footer -->
             <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
                 <button type="button" id="closeResponseTypeModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Mode Info Modal -->
+    <div id="responseModeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">OAuth 2.0 Response Modes</h3>
+                <button type="button" id="closeResponseModeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close response mode info">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 mb-6">
+                        <p class="mb-4">The response mode determines how the authorization server returns the authorization response parameters to the client application. Each mode has different security implications and use cases.</p>
+                        <p class="mb-4">For detailed information, see the <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow#request-an-authorization-code" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">Microsoft Learn documentation</a> and the <a href="https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html#ResponseModes" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">OpenID Connect specification</a>.</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Query Mode -->
+                        <div class="border border-green-200 rounded-lg p-4 bg-green-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="link" class="w-5 h-5 text-green-600"></i>
+                                <h4 class="text-lg font-semibold text-green-900">query</h4>
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">Default</span>
+                            </div>
+                            <p class="text-sm text-green-800 mb-3">
+                                The authorization response parameters are encoded in the query string of the redirect URI.
+                            </p>
+                            <div class="text-xs font-mono bg-white p-2 rounded border text-gray-700 mb-3">
+                                https://app.example.com/callback?code=AUTH_CODE&state=STATE_VALUE
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Best for:</strong> Traditional web applications with server-side processing</p>
+                                <p><strong>Security:</strong> Parameters visible in browser history and server logs</p>
+                                <p><strong>Compatible with:</strong> All response types</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Fragment Mode -->
+                        <div class="border border-orange-200 rounded-lg p-4 bg-orange-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="hash" class="w-5 h-5 text-orange-600"></i>
+                                <h4 class="text-lg font-semibold text-orange-900">fragment</h4>
+                                <span class="px-2 py-1 bg-orange-100 text-orange-800 text-xs font-medium rounded">SPA Default</span>
+                            </div>
+                            <p class="text-sm text-orange-800 mb-3">
+                                The authorization response parameters are encoded in the fragment component (after #) of the redirect URI.
+                            </p>
+                            <div class="text-xs font-mono bg-white p-2 rounded border text-gray-700 mb-3">
+                                https://app.example.com/callback#access_token=TOKEN&token_type=Bearer&state=STATE_VALUE
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Best for:</strong> Single-page applications (SPAs) and mobile apps</p>
+                                <p><strong>Security:</strong> Parameters not sent to server, not logged in server logs</p>
+                                <p><strong>Compatible with:</strong> Implicit flow response types (id_token, token)</p>
+                                <p><strong>Note:</strong> Only accessible via JavaScript on the client side</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Form Post Mode -->
+                        <div class="border border-purple-200 rounded-lg p-4 bg-purple-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="send" class="w-5 h-5 text-purple-600"></i>
+                                <h4 class="text-lg font-semibold text-purple-900">form_post</h4>
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded">Most Secure</span>
+                            </div>
+                            <p class="text-sm text-purple-800 mb-3">
+                                The authorization response parameters are sent via HTTP POST to the redirect URI as form data.
+                            </p>
+                            <div class="text-xs font-mono bg-white p-2 rounded border text-gray-700 mb-3">
+                                POST /callback HTTP/1.1<br/>
+                                Content-Type: application/x-www-form-urlencoded<br/><br/>
+                                code=AUTH_CODE&state=STATE_VALUE
+                            </div>
+                            <div class="space-y-2 text-sm">
+                                <p><strong>Best for:</strong> Web applications requiring maximum security</p>
+                                <p><strong>Security:</strong> Parameters not visible in URLs, browser history, or referrer headers</p>
+                                <p><strong>Compatible with:</strong> All response types</p>
+                                <p><strong>Requirements:</strong> Server must handle POST requests at redirect URI</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <div class="flex items-start gap-3">
+                            <i data-lucide="info" class="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0"></i>
+                            <div class="text-sm text-blue-800">
+                                <p class="font-medium mb-2">Choosing the Right Response Mode</p>
+                                <ul class="space-y-1 text-sm">
+                                    <li>• Use <strong>form_post</strong> for maximum security in web applications</li>
+                                    <li>• Use <strong>fragment</strong> for single-page applications and implicit flows</li>
+                                    <li>• Use <strong>query</strong> for traditional web applications (default behavior)</li>
+                                    <li>• Consider security implications of each mode for your application architecture</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="closeResponseModeModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                     Got it!
                 </button>
             </div>
@@ -6503,7 +6695,7 @@ const GRAPH_PERMISSIONS = [
         const responseTypeSelect = document.getElementById('responseType');
         const stateInput = document.getElementById('state');
         const nonceInput = document.getElementById('nonce');
-        const responseModeSelect = document.getElementById('responseMode');
+        const responseModeHidden = document.getElementById('responseMode');
         const promptSelect = document.getElementById('prompt');
         const loginHintInput = document.getElementById('loginHint');
         const domainHintInput = document.getElementById('domainHint');
@@ -7011,6 +7203,115 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // Setup Response Mode Toggle functionality
+        function setupResponseModeToggles() {
+            const responseModeToggles = document.querySelectorAll('.response-mode-toggle');
+            const responseModeHidden = document.getElementById('responseMode');
+            const responseModeDescription = document.getElementById('responseModeDescription');
+            const responseModeRecommendation = document.getElementById('responseModeRecommendation');
+            
+            // Response mode descriptions and recommendations
+            const responseModeInfo = {
+                'query': {
+                    description: 'Query Parameters - Authorization response parameters are encoded in the query string of the redirect URI.',
+                    recommendation: 'Best for: Traditional web applications with server-side processing. Parameters are visible in URLs and logs.'
+                },
+                'fragment': {
+                    description: 'URL Fragment - Authorization response parameters are encoded in the fragment component (after #) of the redirect URI.',
+                    recommendation: 'Best for: Single-page applications (SPAs). Parameters are not sent to server and not logged in server logs.'
+                },
+                'form_post': {
+                    description: 'HTTP POST - Authorization response parameters are sent via HTTP POST to the redirect URI as form data.',
+                    recommendation: 'Best for: Web applications requiring maximum security. Parameters are not visible in URLs or browser history.'
+                }
+            };
+            
+            function updateResponseModeSelection(responseMode) {
+                // Update all toggle states
+                responseModeToggles.forEach(toggle => {
+                    const toggleResponseMode = toggle.getAttribute('data-response-mode');
+                    if (toggleResponseMode === responseMode) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                });
+                
+                // Update hidden input
+                responseModeHidden.value = responseMode;
+                
+                // Update description and recommendation
+                const info = responseModeInfo[responseMode];
+                if (info) {
+                    responseModeDescription.textContent = info.description;
+                    responseModeRecommendation.textContent = info.recommendation;
+                } else {
+                    responseModeDescription.textContent = 'Select a response mode to see details about how the authorization response will be returned.';
+                    responseModeRecommendation.textContent = 'Each mode has different security implications and use cases.';
+                }
+                
+                // Regenerate URL in real-time
+                generateUrlRealTime();
+            }
+            
+            // Add click handlers to all response mode toggles
+            responseModeToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const responseMode = toggle.getAttribute('data-response-mode');
+                    if (toggle.classList.contains('active')) {
+                        // If already selected, deselect (make optional)
+                        updateResponseModeSelection('');
+                    } else {
+                        updateResponseModeSelection(responseMode);
+                    }
+                });
+            });
+            
+            // Initialize with no selection (response mode is optional)
+            updateResponseModeSelection('');
+        }
+
+        // Setup Response Mode Info Modal functionality
+        function setupResponseModeModal() {
+            const responseModeInfoBtn = document.getElementById('responseModeInfoBtn');
+            const responseModeModal = document.getElementById('responseModeModal');
+            const responseModeCloseBtn = document.getElementById('closeResponseModeModalBtn');
+            const responseModeCloseBtn2 = document.getElementById('closeResponseModeModalBtn2');
+            
+            // Open modal
+            function openResponseModeModal() {
+                responseModeModal.classList.remove('hidden');
+                // Focus management for accessibility
+                responseModeCloseBtn.focus();
+            }
+            
+            // Close modal
+            function closeResponseModeModal() {
+                responseModeModal.classList.add('hidden');
+                // Return focus to the info button for accessibility
+                responseModeInfoBtn.focus();
+            }
+            
+            // Event listeners
+            responseModeInfoBtn.addEventListener('click', openResponseModeModal);
+            responseModeCloseBtn.addEventListener('click', closeResponseModeModal);
+            responseModeCloseBtn2.addEventListener('click', closeResponseModeModal);
+            
+            // Close modal when clicking outside
+            responseModeModal.addEventListener('click', (e) => {
+                if (e.target === responseModeModal) {
+                    closeResponseModeModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !responseModeModal.classList.contains('hidden')) {
+                    closeResponseModeModal();
+                }
+            });
+        }
+
         // Function to toggle fields based on URL type
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
@@ -7032,7 +7333,7 @@ const GRAPH_PERMISSIONS = [
                 document.querySelector('[for="responseType"]').closest('.space-y-2'), // Response Type field
                 document.querySelector('[for="state"]').closest('.space-y-2'), // State field (optional params)
                 document.querySelector('[for="nonce"]').closest('.space-y-2'), // Nonce field
-                document.querySelector('[for="responseMode"]').closest('.space-y-2'), // Response Mode field
+                document.getElementById('responseModeInfoBtn').closest('.space-y-2'), // Response Mode field
                 document.querySelector('[for="prompt"]').closest('.space-y-2'), // Prompt field
                 document.querySelector('[for="loginHint"]').closest('.space-y-2'), // Login Hint field
                 document.querySelector('[for="domainHint"]').closest('.space-y-2') // Domain Hint field
@@ -7281,8 +7582,8 @@ const GRAPH_PERMISSIONS = [
                 if (nonceInput.value.trim()) {
                     params.append('nonce', nonceInput.value.trim());
                 }
-                if (responseModeSelect.value) {
-                    params.append('response_mode', responseModeSelect.value);
+                if (responseModeHidden.value) {
+                    params.append('response_mode', responseModeHidden.value);
                 }
                 if (promptSelect.value) {
                     params.append('prompt', promptSelect.value);
@@ -7320,6 +7621,20 @@ const GRAPH_PERMISSIONS = [
         function clearForm() {
             urlForm.reset(); // Resets all form fields to their initial state
             generatedUrlTextarea.value = ''; // Clear the generated URL
+            
+            // Reset response mode toggles
+            document.querySelectorAll('.response-mode-toggle').forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+            const responseModeDescription = document.getElementById('responseModeDescription');
+            const responseModeRecommendation = document.getElementById('responseModeRecommendation');
+            if (responseModeDescription) {
+                responseModeDescription.textContent = 'Select a response mode to see details about how the authorization response will be returned.';
+            }
+            if (responseModeRecommendation) {
+                responseModeRecommendation.textContent = 'Each mode has different security implications and use cases.';
+            }
+            
             toggleTenantIdField(); // Reset tenant ID field visibility
             toggleUrlTypeFields(); // Reset URL type fields
             generateUrlRealTime(); // Regenerate URL after clearing
@@ -7337,7 +7652,7 @@ const GRAPH_PERMISSIONS = [
                 responseTypeSelect,
                 stateInput,
                 nonceInput,
-                responseModeSelect,
+                responseModeHidden,
                 promptSelect,
                 loginHintInput,
                 domainHintInput,
@@ -7396,6 +7711,12 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Response Type modal
             setupResponseTypeModal();
+            
+            // Setup Response Mode toggles
+            setupResponseModeToggles();
+            
+            // Setup Response Mode modal
+            setupResponseModeModal();
             
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();

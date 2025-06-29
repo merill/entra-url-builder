@@ -653,6 +653,79 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             flex: 1;
         }
+        
+        /* Response Type Toggle Styles */
+        .response-type-toggle {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            min-height: 2.5rem;
+        }
+        
+        .response-type-toggle:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+        
+        .response-type-toggle.active {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+            color: #1e40af;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            font-weight: 600;
+        }
+        
+        .response-type-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        
+        /* Individual response type icon colors */
+        .response-type-toggle[data-response-type="code"] .response-type-icon {
+            color: #059669; /* Green for secure authorization code */
+        }
+        
+        .response-type-toggle[data-response-type="id_token"] .response-type-icon {
+            color: #2563eb; /* Blue for ID token */
+        }
+        
+        .response-type-toggle[data-response-type="token"] .response-type-icon {
+            color: #dc2626; /* Red for access token (deprecated) */
+        }
+        
+        .response-type-toggle[data-response-type="code id_token"] .response-type-icon {
+            color: #7c3aed; /* Purple for hybrid with ID token */
+        }
+        
+        .response-type-toggle[data-response-type="code token"] .response-type-icon {
+            color: #ea580c; /* Orange for hybrid with access token */
+        }
+        
+        .response-type-toggle[data-response-type="id_token token"] .response-type-icon {
+            color: #be185d; /* Pink for implicit with both tokens */
+        }
+        
+        .response-type-toggle[data-response-type="code id_token token"] .response-type-icon {
+            color: #0891b2; /* Cyan for full hybrid flow */
+        }
+        
+        .response-type-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            flex: 1;
+        }
     </style>
 </head>
 <body>
@@ -942,13 +1015,67 @@
                         </div>
                         
                         <div class="space-y-2">
-                            <label for="responseType" class="label">Response Type</label>
-                            <select id="responseType" class="select">
-                                <option value="code">code (Auth Code Flow)</option>
-                                <option value="id_token">id_token (Implicit Flow)</option>
-                                <option value="code id_token">code id_token</option>
-                            </select>
-                            <p class="text-xs text-gray-500" id="responseTypeHelp">Determines what is returned: 'code' for authorization code (most secure), 'id_token' for immediate token (less secure), or both for hybrid flows</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <label class="label">Response Type</label>
+                                <button type="button" id="responseTypeInfoBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Learn about response types">
+                                    <i data-lucide="info" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Response Type Toggles -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                <div class="space-y-3">
+                                    <!-- Single Response Types -->
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-600 mb-2">Single Response Types</h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button type="button" class="response-type-toggle" data-response-type="code" title="Authorization Code Flow - Most secure, requires token exchange">
+                                                <i data-lucide="shield-check" class="response-type-icon"></i>
+                                                <span class="response-type-name">code</span>
+                                            </button>
+                                            <button type="button" class="response-type-toggle" data-response-type="id_token" title="ID Token only - Immediate authentication token">
+                                                <i data-lucide="credit-card" class="response-type-icon"></i>
+                                                <span class="response-type-name">id_token</span>
+                                            </button>
+                                            <button type="button" class="response-type-toggle" data-response-type="token" title="Access Token only - Immediate access token (deprecated)">
+                                                <i data-lucide="key-square" class="response-type-icon"></i>
+                                                <span class="response-type-name">token</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hybrid Response Types -->
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-600 mb-2">Hybrid Response Types</h4>
+                                        <div class="flex flex-wrap gap-2">
+                                            <button type="button" class="response-type-toggle" data-response-type="code id_token" title="Hybrid Flow - Code + ID Token for immediate authentication and secure token exchange">
+                                                <i data-lucide="shield" class="response-type-icon"></i>
+                                                <span class="response-type-name">code id_token</span>
+                                            </button>
+                                            <button type="button" class="response-type-toggle" data-response-type="code token" title="Hybrid Flow - Code + Access Token for immediate access and secure refresh">
+                                                <i data-lucide="key" class="response-type-icon"></i>
+                                                <span class="response-type-name">code token</span>
+                                            </button>
+                                            <button type="button" class="response-type-toggle" data-response-type="id_token token" title="Implicit Flow - ID Token + Access Token (deprecated for new apps)">
+                                                <i data-lucide="coins" class="response-type-icon"></i>
+                                                <span class="response-type-name">id_token token</span>
+                                            </button>
+                                            <button type="button" class="response-type-toggle" data-response-type="code id_token token" title="Full Hybrid Flow - All tokens for maximum flexibility">
+                                                <i data-lucide="gem" class="response-type-icon"></i>
+                                                <span class="response-type-name">code id_token token</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input to store the selected response type -->
+                            <input type="hidden" id="responseType" value="code">
+                            
+                            <div class="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <p class="font-medium mb-1" id="responseTypeDescription">Authorization Code Flow - Most secure option. Returns an authorization code that must be exchanged for tokens.</p>
+                                <p class="text-gray-500" id="responseTypeRecommendation">Recommended for: Web applications, mobile apps, and SPAs with PKCE.</p>
+                            </div>
                         </div>
 
                         <!-- Admin Consent specific fields -->
@@ -1308,6 +1435,158 @@
             <!-- Modal Footer -->
             <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
                 <button type="button" id="closeOidcModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Response Type Info Modal -->
+    <div id="responseTypeModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">OAuth 2.0 Response Types & Flows</h3>
+                <button type="button" id="closeResponseTypeModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close response type info">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 mb-4">
+                        The response_type parameter determines which OAuth 2.0/OpenID Connect flow your application uses and what tokens are returned immediately from the authorization endpoint.
+                    </div>
+                    
+                    <!-- Single Response Types -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Single Response Types</h4>
+                        <div class="space-y-4">
+                            <div class="p-4 border border-green-200 rounded-lg bg-green-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-green-100 px-2 py-1 rounded">code</code>
+                                    <span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">Recommended</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Authorization Code Flow:</strong> The most secure flow for web apps, mobile apps, and SPAs. Returns only an authorization code that must be exchanged for tokens on the back-end.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Use for:</strong> Web applications, mobile apps, SPAs with PKCE • <strong>Security:</strong> Highest • <strong>Tokens in URL:</strong> None
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-blue-200 rounded-lg bg-blue-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-blue-100 px-2 py-1 rounded">id_token</code>
+                                    <span class="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">Implicit</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Implicit Flow (ID Token only):</strong> Returns an ID token immediately. Used for authentication-only scenarios where you don't need to call APIs.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Use for:</strong> Authentication-only SPAs • <strong>Security:</strong> Medium • <strong>Tokens in URL:</strong> ID token
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-red-200 rounded-lg bg-red-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-red-100 px-2 py-1 rounded">token</code>
+                                    <span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full font-medium">Deprecated</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Implicit Flow (Access Token only):</strong> Returns an access token immediately. Deprecated for new applications due to security concerns.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Avoid for:</strong> New applications • <strong>Security:</strong> Low • <strong>Tokens in URL:</strong> Access token
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hybrid Response Types -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4">Hybrid Response Types</h4>
+                        <div class="space-y-4">
+                            <div class="p-4 border border-purple-200 rounded-lg bg-purple-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-purple-100 px-2 py-1 rounded">code id_token</code>
+                                    <span class="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">Hybrid</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Hybrid Flow (Code + ID Token):</strong> Returns both an authorization code and ID token. Enables immediate user identification while maintaining security for API access.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Use for:</strong> Web apps needing immediate auth + secure API access • <strong>Common in:</strong> ASP.NET applications
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-orange-200 rounded-lg bg-orange-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-orange-100 px-2 py-1 rounded">code token</code>
+                                    <span class="text-xs bg-orange-100 text-orange-700 px-2 py-1 rounded-full font-medium">Hybrid</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Hybrid Flow (Code + Access Token):</strong> Returns authorization code and access token. Provides immediate API access plus refresh capability.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Use for:</strong> Apps needing immediate API access + long-term refresh • <strong>Security:</strong> Medium-High
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-pink-200 rounded-lg bg-pink-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-pink-100 px-2 py-1 rounded">id_token token</code>
+                                    <span class="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded-full font-medium">Implicit</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Implicit Flow (Both Tokens):</strong> Returns both ID token and access token immediately. Deprecated for new applications.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Legacy use:</strong> Older SPAs • <strong>Security:</strong> Lower • <strong>Tokens in URL:</strong> Both tokens
+                                </div>
+                            </div>
+
+                            <div class="p-4 border border-cyan-200 rounded-lg bg-cyan-50">
+                                <div class="flex items-center gap-2 mb-2">
+                                    <code class="text-sm font-mono bg-cyan-100 px-2 py-1 rounded">code id_token token</code>
+                                    <span class="text-xs bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full font-medium">Full Hybrid</span>
+                                </div>
+                                <p class="text-sm text-gray-700 leading-relaxed mb-2">
+                                    <strong>Full Hybrid Flow:</strong> Returns all three: authorization code, ID token, and access token. Maximum flexibility but complex.
+                                </p>
+                                <div class="text-xs text-gray-600">
+                                    <strong>Use for:</strong> Complex enterprise scenarios • <strong>Complexity:</strong> High • <strong>All tokens available immediately</strong>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-2">🔒 Security Best Practices</h4>
+                        <ul class="text-sm text-gray-600 space-y-1">
+                            <li>• <strong>Prefer Authorization Code Flow:</strong> Use <code class="font-mono">code</code> with PKCE for highest security</li>
+                            <li>• <strong>Avoid Implicit Flows:</strong> Tokens in URLs are less secure than back-channel exchanges</li>
+                            <li>• <strong>Use HTTPS:</strong> All redirect URIs must use HTTPS in production</li>
+                            <li>• <strong>Validate tokens:</strong> Always verify token signatures and claims</li>
+                            <li>• <strong>Short-lived tokens:</strong> Use refresh tokens instead of long-lived access tokens</li>
+                        </ul>
+                    </div>
+
+                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
+                        <h4 class="font-medium text-gray-900 mb-2">📚 Learn More</h4>
+                        <div class="text-sm text-gray-600 space-y-1">
+                            <p>• <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-800 underline">Microsoft: OAuth 2.0 authorization code flow</a></p>
+                            <p>• <a href="https://openid.net/specs/oauth-v2-multiple-response-types-1_0.html" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-800 underline">OpenID: Multiple Response Types specification</a></p>
+                            <p>• <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow#request-an-id-token-as-well-or-hybrid-flow" target="_blank" rel="noopener" class="text-blue-600 hover:text-blue-800 underline">Microsoft: Hybrid flow documentation</a></p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="closeResponseTypeModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
                     Got it!
                 </button>
             </div>
@@ -6615,6 +6894,123 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // Setup Response Type Toggle functionality
+        function setupResponseTypeToggles() {
+            const responseTypeToggles = document.querySelectorAll('.response-type-toggle');
+            const responseTypeHidden = document.getElementById('responseType');
+            const responseTypeDescription = document.getElementById('responseTypeDescription');
+            const responseTypeRecommendation = document.getElementById('responseTypeRecommendation');
+            
+            // Response type descriptions and recommendations
+            const responseTypeInfo = {
+                'code': {
+                    description: 'Authorization Code Flow - Most secure option. Returns an authorization code that must be exchanged for tokens.',
+                    recommendation: 'Recommended for: Web applications, mobile apps, and SPAs with PKCE.'
+                },
+                'id_token': {
+                    description: 'Implicit Flow (ID Token only) - Returns an ID token immediately for authentication.',
+                    recommendation: 'Use for: Authentication-only scenarios in SPAs (consider code flow instead).'
+                },
+                'token': {
+                    description: 'Implicit Flow (Access Token only) - Returns an access token immediately. DEPRECATED for security reasons.',
+                    recommendation: 'Avoid for: New applications. Use authorization code flow instead.'
+                },
+                'code id_token': {
+                    description: 'Hybrid Flow - Returns both authorization code and ID token. Enables immediate authentication with secure token exchange.',
+                    recommendation: 'Use for: Web apps needing immediate user identification + secure API access (e.g., ASP.NET).'
+                },
+                'code token': {
+                    description: 'Hybrid Flow - Returns authorization code and access token. Provides immediate API access with refresh capability.',
+                    recommendation: 'Use for: Apps needing immediate API access while maintaining refresh token security.'
+                },
+                'id_token token': {
+                    description: 'Implicit Flow (Both tokens) - Returns both ID token and access token. DEPRECATED for new applications.',
+                    recommendation: 'Legacy use: Older SPAs. Prefer authorization code flow for new applications.'
+                },
+                'code id_token token': {
+                    description: 'Full Hybrid Flow - Returns authorization code, ID token, and access token. Maximum flexibility but added complexity.',
+                    recommendation: 'Use for: Complex enterprise scenarios requiring all token types immediately.'
+                }
+            };
+            
+            function updateResponseTypeSelection(responseType) {
+                // Update all toggle states
+                responseTypeToggles.forEach(toggle => {
+                    const toggleResponseType = toggle.getAttribute('data-response-type');
+                    if (toggleResponseType === responseType) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                });
+                
+                // Update hidden input
+                responseTypeHidden.value = responseType;
+                
+                // Update description and recommendation
+                const info = responseTypeInfo[responseType];
+                if (info) {
+                    responseTypeDescription.textContent = info.description;
+                    responseTypeRecommendation.textContent = info.recommendation;
+                }
+                
+                // Regenerate URL in real-time
+                generateUrlRealTime();
+            }
+            
+            // Add click handlers to all response type toggles
+            responseTypeToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const responseType = toggle.getAttribute('data-response-type');
+                    updateResponseTypeSelection(responseType);
+                });
+            });
+            
+            // Initialize with default selection (code)
+            updateResponseTypeSelection('code');
+        }
+
+        // Setup Response Type Info Modal functionality
+        function setupResponseTypeModal() {
+            const responseTypeInfoBtn = document.getElementById('responseTypeInfoBtn');
+            const responseTypeModal = document.getElementById('responseTypeModal');
+            const responseTypeCloseBtn = document.getElementById('closeResponseTypeModalBtn');
+            const responseTypeCloseBtn2 = document.getElementById('closeResponseTypeModalBtn2');
+            
+            // Open modal
+            function openResponseTypeModal() {
+                responseTypeModal.classList.remove('hidden');
+                // Focus management for accessibility
+                responseTypeCloseBtn.focus();
+            }
+            
+            // Close modal
+            function closeResponseTypeModal() {
+                responseTypeModal.classList.add('hidden');
+                // Return focus to the info button for accessibility
+                responseTypeInfoBtn.focus();
+            }
+            
+            // Event listeners
+            responseTypeInfoBtn.addEventListener('click', openResponseTypeModal);
+            responseTypeCloseBtn.addEventListener('click', closeResponseTypeModal);
+            responseTypeCloseBtn2.addEventListener('click', closeResponseTypeModal);
+            
+            // Close modal when clicking outside
+            responseTypeModal.addEventListener('click', (e) => {
+                if (e.target === responseTypeModal) {
+                    closeResponseTypeModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !responseTypeModal.classList.contains('hidden')) {
+                    closeResponseTypeModal();
+                }
+            });
+        }
+
         // Function to toggle fields based on URL type
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
@@ -6994,6 +7390,12 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Graph modal
             setupGraphModal();
+            
+            // Setup Response Type toggles
+            setupResponseTypeToggles();
+            
+            // Setup Response Type modal
+            setupResponseTypeModal();
             
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();

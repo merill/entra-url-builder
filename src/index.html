@@ -783,6 +783,101 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             flex: 1;
         }
+        
+        /* Sticky Generated URL Styles */
+        .generated-url-sticky {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(255, 255, 255, 0.7);
+            -webkit-backdrop-filter: blur(20px) saturate(1.8);
+            backdrop-filter: blur(20px) saturate(1.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12);
+            padding: 1rem;
+            transition: all 0.3s ease-in-out;
+        }
+        
+        .generated-url-sticky .generated-url-wrapper {
+            max-width: 1024px;
+            margin: 0 auto;
+        }
+        
+        /* Sticky panel layout alignment */
+        .generated-url-sticky .url-header {
+            max-width: 1024px;
+            margin: 0 auto 0.75rem auto;
+        }
+        
+        .generated-url-sticky .button {
+            max-width: 1024px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .generated-url-sticky textarea {
+            font-size: 0.75rem;
+            min-height: 2.5rem;
+        }
+        
+        .generated-url-sticky .button {
+            height: 2rem;
+            font-size: 0.75rem;
+            padding: 0.25rem 0.75rem;
+        }
+        
+        .generated-url-sticky h2 {
+            font-size: 1rem;
+            margin-bottom: 0.75rem;
+        }
+        
+        .generated-url-sticky .space-y-4 > * + * {
+            margin-top: 0.75rem;
+        }
+        
+        /* Icon switching for sticky mode */
+        .generated-url-sticky .url-header-icon {
+            display: none;
+        }
+        
+        .generated-url-sticky .url-header-logo {
+            display: block;
+            width: 1.5rem;
+            height: 1.5rem;
+            flex-shrink: 0;
+        }
+        
+        .url-header-logo {
+            display: none;
+            width: 1.25rem;
+            height: 1.25rem;
+            flex-shrink: 0;
+            object-fit: contain;
+        }
+        
+        /* Ensure proper alignment of header items */
+        .url-header {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .url-header h2 {
+            line-height: 1;
+            margin: 0;
+        }
+        
+        /* Placeholder space when sticky is active */
+        .generated-url-placeholder {
+            height: 0;
+            transition: height 0.3s ease-in-out;
+        }
+        
+        .generated-url-placeholder.active {
+            height: 200px; /* Approximate height of the sticky section */
+        }
     </style>
 </head>
 <body>
@@ -860,10 +955,11 @@
                 <form id="urlForm" class="space-y-8">
                 
                 <!-- Real-time Generated URL Section -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i data-lucide="link" class="w-4 h-4 text-gray-600"></i>
-                        <h2 class="text-lg font-semibold text-gray-900">Generated URL</h2>
+                <div id="generatedUrlSection" class="space-y-4">
+                    <div class="url-header mb-4">
+                        <i data-lucide="link" class="w-4 h-4 text-gray-600 url-header-icon"></i>
+                        <img src="icon.svg" alt="Entra Logo" class="url-header-logo">
+                        <h2 class="text-lg font-semibold text-gray-900">Microsoft Entra Sign In URL</h2>
                     </div>
                     
                     <div class="space-y-4">
@@ -878,6 +974,9 @@
                     
                     <div id="messageBox" class="mt-4 hidden"></div>
                 </div>
+                
+                <!-- Placeholder div for when the URL section becomes sticky -->
+                <div id="generatedUrlPlaceholder" class="generated-url-placeholder"></div>
                 
                 <!-- URL Type Button Selectors -->
                 <div class="url-type-container">
@@ -7734,6 +7833,9 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Generate Button Event Listeners
             setupGenerateButtonListeners();
+            
+            // Setup Sticky Generated URL
+            setupStickyGeneratedUrl();
         });
 
         // Setup Generate Button Event Listeners
@@ -7747,6 +7849,71 @@ const GRAPH_PERMISSIONS = [
             document.getElementById('generateNonce').addEventListener('click', () => {
                 nonceInput.value = generateRandomString(32);
                 generateUrlRealTime(); // Update URL immediately
+            });
+        }
+
+        // Setup Sticky Generated URL functionality
+        function setupStickyGeneratedUrl() {
+            const generatedUrlSection = document.getElementById('generatedUrlSection');
+            const generatedUrlPlaceholder = document.getElementById('generatedUrlPlaceholder');
+            let isSticky = false;
+            let originalTop = 0;
+            
+            // Get the original position of the URL section
+            function updateOriginalPosition() {
+                if (!isSticky) {
+                    const rect = generatedUrlSection.getBoundingClientRect();
+                    originalTop = rect.top + window.pageYOffset;
+                }
+            }
+            
+            // Handle scroll events
+            function handleScroll() {
+                const scrollTop = window.pageYOffset;
+                const shouldBeSticky = scrollTop > originalTop;
+                
+                if (shouldBeSticky && !isSticky) {
+                    // Make sticky
+                    isSticky = true;
+                    generatedUrlSection.classList.add('generated-url-sticky');
+                    generatedUrlPlaceholder.classList.add('active');
+                    
+                    // Update textarea rows for compact view
+                    const textarea = document.getElementById('generatedUrl');
+                    textarea.setAttribute('rows', '2');
+                    
+                } else if (!shouldBeSticky && isSticky) {
+                    // Remove sticky
+                    isSticky = false;
+                    generatedUrlSection.classList.remove('generated-url-sticky');
+                    generatedUrlPlaceholder.classList.remove('active');
+                    
+                    // Restore textarea rows
+                    const textarea = document.getElementById('generatedUrl');
+                    textarea.setAttribute('rows', '4');
+                }
+            }
+            
+            // Initialize
+            updateOriginalPosition();
+            
+            // Add scroll listener with throttling
+            let ticking = false;
+            window.addEventListener('scroll', () => {
+                if (!ticking) {
+                    requestAnimationFrame(() => {
+                        handleScroll();
+                        ticking = false;
+                    });
+                    ticking = true;
+                }
+            });
+            
+            // Update position on window resize
+            window.addEventListener('resize', () => {
+                if (!isSticky) {
+                    updateOriginalPosition();
+                }
             });
         }
 

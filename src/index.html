@@ -223,7 +223,38 @@
             border-radius: var(--radius);
             background: #ffffff;
             margin: 0;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            color: transparent;
+            caret-color: #374151;
         }
+        
+        /* URL syntax highlighting overlay */
+        .url-highlight-overlay {
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            right: 3px;
+            bottom: 3px;
+            pointer-events: none;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+            padding: 0.5rem 0.75rem;
+            border-radius: var(--radius);
+            background: #ffffff;
+            overflow: hidden;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        
+        /* URL component colors */
+        .url-base { color: #059669; font-weight: 600; }
+        .url-tenant { color: #dc2626; font-weight: 500; }
+        .url-endpoint { color: #7c3aed; font-weight: 500; }
+        .url-param-name { color: #0891b2; font-weight: 500; }
+        .url-param-value { color: #ea580c; }
+        .url-separator { color: #6b7280; }
+        .url-protocol { color: #1f2937; font-weight: 600; }
         
         @keyframes glow-border {
             0%, 100% {
@@ -821,6 +852,11 @@
             min-height: 2.5rem;
         }
         
+        .generated-url-sticky .url-highlight-overlay {
+            font-size: 0.75rem;
+            line-height: 1.4;
+        }
+        
         .generated-url-sticky .button {
             height: 2rem;
             font-size: 0.75rem;
@@ -924,7 +960,7 @@
                     </div>
                     <div class="text-center md:text-left">
                         <h1 class="text-2xl font-bold text-gray-900">Microsoft Entra Sign-in URL Builder</h1>
-                        <p class="text-sm text-gray-600">Generate OAuth 2.0 authorization URLs for Microsoft Entra ID</p>
+                        <p class="text-sm text-gray-600">Generate OAuth 2.0 authorization URLs for Microsoft Entra ID and learn about OAuth & OpenID Connect</p>
                     </div>
                 </div>
                 <div class="flex-shrink-0 order-3 md:order-none mx-auto md:mx-0">
@@ -964,6 +1000,7 @@
                     <div class="space-y-4">
                         <div class="generated-url-wrapper">
                             <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here as you fill in the fields..."></textarea>
+                            <div id="urlHighlightOverlay" class="url-highlight-overlay"></div>
                         </div>
                         <button type="button" id="copyUrl" class="button button-primary w-full">
                             <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
@@ -7705,6 +7742,39 @@ const GRAPH_PERMISSIONS = [
                 fullUrl += `?${paramString}`;
             }
             generatedUrlTextarea.value = fullUrl;
+            
+            // Apply syntax highlighting
+            highlightUrl(fullUrl);
+        }
+        
+        // Function to apply syntax highlighting to the URL
+        function highlightUrl(url) {
+            const overlay = document.getElementById('urlHighlightOverlay');
+            if (!url || !overlay) {
+                overlay.innerHTML = '';
+                return;
+            }
+            
+            // Parse and highlight different parts of the URL
+            let highlightedUrl = url;
+            
+            // Protocol
+            highlightedUrl = highlightedUrl.replace(/^(https?:\/\/)/, '<span class="url-protocol">$1</span>');
+            
+            // Base domain
+            highlightedUrl = highlightedUrl.replace(/(login\.microsoftonline\.com)/, '<span class="url-base">$1</span>');
+            
+            // Tenant ID or common/organizations/consumers
+            highlightedUrl = highlightedUrl.replace(/\/([a-f0-9-]{36}|common|organizations|consumers)\//, '/<span class="url-tenant">$1</span>/');
+            
+            // Endpoint
+            highlightedUrl = highlightedUrl.replace(/\/(oauth2\/v2\.0\/authorize|adminconsent)/, '/<span class="url-endpoint">$1</span>');
+            
+            // Parameters - handle both ? and & separators
+            highlightedUrl = highlightedUrl.replace(/([?&])([^=&]+)(=)([^&]*)/g, 
+                '<span class="url-separator">$1</span><span class="url-param-name">$2</span><span class="url-separator">$3</span><span class="url-param-value">$4</span>');
+            
+            overlay.innerHTML = highlightedUrl;
         }
 
         // Function to copy the generated URL to clipboard
@@ -7723,6 +7793,7 @@ const GRAPH_PERMISSIONS = [
         function clearForm() {
             urlForm.reset(); // Resets all form fields to their initial state
             generatedUrlTextarea.value = ''; // Clear the generated URL
+            highlightUrl(''); // Clear the highlighting
             
             // Reset response mode toggles
             document.querySelectorAll('.response-mode-toggle').forEach(toggle => {

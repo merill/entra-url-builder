@@ -1,0 +1,86 @@
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#f8fafc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#e2e8f0;stop-opacity:1" />
+    </linearGradient>
+    
+    <!-- Logo gradient (matching the original icon.svg) -->
+    <radialGradient id="logoGradient" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" style="stop-color:#c6f8ff;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#a9ff68;stop-opacity:1" />
+    </radialGradient>
+    
+    <!-- Pattern definition -->
+    <pattern id="pattern" x="0" y="0" width="40" height="40" patternUnits="userSpaceOnUse">
+      <circle cx="20" cy="20" r="1" fill="#94a3b8" opacity="0.3"/>
+    </pattern>
+  </defs>
+  
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bgGradient)"/>
+  
+  <!-- Subtle pattern overlay -->
+  <rect width="1200" height="630" fill="url(#pattern)"/>
+  
+  <!-- Logo on the left (recreating the actual icon.svg design) -->
+  <g transform="translate(140, 315)">
+    <!-- Circular background with gradient -->
+    <circle cx="0" cy="0" r="80" fill="url(#logoGradient)" 
+            style="filter: drop-shadow(0 15px 35px rgba(0,0,0,0.25))"/>
+    
+    <!-- CodeSandbox-style icon paths (scaled and centered) -->
+    <g transform="scale(6.5) translate(-12, -12)" fill="#ffffff" stroke="#1e1e1e" 
+       stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill-opacity="0.9">
+      <!-- Main container shape -->
+      <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/>
+      <!-- Connection lines -->
+      <polyline points="7.5 4.21 12 6.81 16.5 4.21"/>
+      <polyline points="7.5 19.79 7.5 14.6 3 12"/>
+      <polyline points="21 12 16.5 14.6 16.5 19.79"/>
+      <polyline points="3.27 6.96 12 12.01 20.73 6.96"/>
+      <line x1="12" x2="12" y1="22.08" y2="12"/>
+    </g>
+  </g>
+  
+  <!-- Main content area -->
+  <g transform="translate(340, 0)">
+    <!-- Title -->
+    <text x="0" y="280" font-family="Inter, system-ui, sans-serif" font-size="64" font-weight="700" fill="#1f2937">
+      Microsoft Entra
+    </text>
+    <text x="0" y="350" font-family="Inter, system-ui, sans-serif" font-size="64" font-weight="700" fill="#3b82f6">
+      Sign-in URL Builder
+    </text>
+    
+    <!-- Subtitle -->
+    <text x="0" y="420" font-family="Inter, system-ui, sans-serif" font-size="28" font-weight="400" fill="#6b7280">
+      Generate OAuth 2.0 authorization URLs for Microsoft Entra ID
+    </text>
+    
+    <!-- Features -->
+    <g transform="translate(0, 480)">
+      <text x="0" y="0" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="500" fill="#059669">
+        ✓ Authorization URLs
+      </text>
+      <text x="250" y="0" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="500" fill="#059669">
+        ✓ Admin Consent URLs
+      </text>
+      <text x="500" y="0" font-family="Inter, system-ui, sans-serif" font-size="20" font-weight="500" fill="#059669">
+        ✓ Multi-tenant Support
+      </text>
+    </g>
+  </g>
+  
+  <!-- Bottom branding -->
+  <text x="600" y="590" font-family="Inter, system-ui, sans-serif" font-size="18" font-weight="400" fill="#9ca3af" text-anchor="middle">
+    signin.merill.net
+  </text>
+  
+  <!-- Decorative elements -->
+  <circle cx="1050" cy="150" r="3" fill="#3b82f6" opacity="0.6"/>
+  <circle cx="1100" cy="200" r="2" fill="#8b5cf6" opacity="0.6"/>
+  <circle cx="1120" cy="120" r="2.5" fill="#06b6d4" opacity="0.6"/>
+  <circle cx="980" cy="180" r="2" fill="#10b981" opacity="0.6"/>
+</svg>

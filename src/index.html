@@ -2031,6 +2031,105 @@
         </div>
     </div>
 
+    <!-- Prompt Info Modal -->
+    <div id="promptModal" class="fixed inset-0 bg-black bg-opacity-50 z-[1100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-4 border-b border-gray-200">
+                <h3 class="text-lg font-semibold text-gray-900">OAuth 2.0 Prompt Parameter</h3>
+                <button type="button" id="closePromptModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close modal" aria-label="Close prompt info">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <div class="text-sm text-gray-600 mb-6">
+                        <p class="mb-4">The prompt parameter controls how the user interacts with the authorization server during authentication. It determines whether the user will be prompted to sign in, consent to permissions, or if the authentication should happen silently.</p>
+                        <p class="mb-4">For detailed information, see the <a href="https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow#request-an-authorization-code" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">Microsoft Learn documentation</a> and the <a href="https://openid.net/specs/openid-connect-core-1_0.html#AuthRequest" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">OpenID Connect specification</a>.</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <!-- Login Prompt -->
+                        <div class="border border-red-200 rounded-lg p-4 bg-red-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="log-in" class="w-5 h-5 text-red-600"></i>
+                                <h4 class="text-lg font-semibold text-red-900">login</h4>
+                            </div>
+                            <p class="text-sm text-red-800 mb-3">
+                                Forces the user to enter their credentials on that request, negating single sign-on. The user will always be prompted to sign in, even if they have a valid session.
+                            </p>
+                            <div class="text-xs text-red-700">
+                                <strong>Use case:</strong> Applications requiring fresh authentication, step-up authentication, or when you need to ensure the user is actively present.
+                            </div>
+                        </div>
+
+                        <!-- None Prompt -->
+                        <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="eye-off" class="w-5 h-5 text-gray-600"></i>
+                                <h4 class="text-lg font-semibold text-gray-900">none</h4>
+                            </div>
+                            <p class="text-sm text-gray-800 mb-3">
+                                Ensures that the user isn't shown any interactive prompt. If the user can't be signed in silently, the authorization server returns an error.
+                            </p>
+                            <div class="text-xs text-gray-700">
+                                <strong>Use case:</strong> Background authentication checks, iframe authentication, or when you want to check if a user is already signed in without interrupting their flow.
+                            </div>
+                        </div>
+
+                        <!-- Consent Prompt -->
+                        <div class="border border-green-200 rounded-lg p-4 bg-green-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-green-600"></i>
+                                <h4 class="text-lg font-semibold text-green-900">consent</h4>
+                            </div>
+                            <p class="text-sm text-green-800 mb-3">
+                                Triggers the OAuth consent dialog after the user signs in, asking the user to grant permissions to the app, even if consent was granted before.
+                            </p>
+                            <div class="text-xs text-green-700">
+                                <strong>Use case:</strong> When your app has updated permissions, for compliance reasons, or when you need explicit user consent for sensitive operations.
+                            </div>
+                        </div>
+
+                        <!-- Select Account Prompt -->
+                        <div class="border border-purple-200 rounded-lg p-4 bg-purple-50">
+                            <div class="flex items-center gap-2 mb-3">
+                                <i data-lucide="users" class="w-5 h-5 text-purple-600"></i>
+                                <h4 class="text-lg font-semibold text-purple-900">select_account</h4>
+                            </div>
+                            <p class="text-sm text-purple-800 mb-3">
+                                Shows the account selection experience, allowing the user to select from among the accounts for which they have an existing session, or to add a different account.
+                            </p>
+                            <div class="text-xs text-purple-700">
+                                <strong>Use case:</strong> Multi-account scenarios, when users may have multiple work/personal accounts, or when you want to ensure the user selects the correct account.
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="font-semibold text-blue-900 mb-2">💡 Best Practices</h4>
+                        <ul class="text-sm text-blue-800 space-y-1">
+                            <li>• Use <code class="bg-blue-100 px-1 rounded">login</code> for high-security scenarios requiring fresh authentication</li>
+                            <li>• Use <code class="bg-blue-100 px-1 rounded">none</code> for silent authentication checks in SPAs or background processes</li>
+                            <li>• Use <code class="bg-blue-100 px-1 rounded">consent</code> when permissions have changed or for compliance</li>
+                            <li>• Use <code class="bg-blue-100 px-1 rounded">select_account</code> in multi-tenant apps or when account disambiguation is needed</li>
+                            <li>• Omit the prompt parameter for default behavior (single sign-on when possible)</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-gray-200 flex justify-end gap-3">
+                <button type="button" id="closePromptModalBtn2" class="px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                    Got it!
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Additional SEO Schema -->
     <script type="application/ld+json">
     {
@@ -7557,6 +7656,47 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // Setup Prompt Modal functionality
+        function setupPromptModal() {
+            const promptInfoBtn = document.getElementById('promptInfoBtn');
+            const promptModal = document.getElementById('promptModal');
+            const promptCloseBtn = document.getElementById('closePromptModalBtn');
+            const promptCloseBtn2 = document.getElementById('closePromptModalBtn2');
+            
+            // Open modal
+            function openPromptModal() {
+                promptModal.classList.remove('hidden');
+                // Focus management for accessibility
+                promptCloseBtn.focus();
+            }
+            
+            // Close modal
+            function closePromptModal() {
+                promptModal.classList.add('hidden');
+                // Return focus to the info button for accessibility
+                promptInfoBtn.focus();
+            }
+            
+            // Event listeners
+            promptInfoBtn.addEventListener('click', openPromptModal);
+            promptCloseBtn.addEventListener('click', closePromptModal);
+            promptCloseBtn2.addEventListener('click', closePromptModal);
+            
+            // Close modal when clicking outside
+            promptModal.addEventListener('click', (e) => {
+                if (e.target === promptModal) {
+                    closePromptModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !promptModal.classList.contains('hidden')) {
+                    closePromptModal();
+                }
+            });
+        }
+
         // Setup Prompt Toggles functionality
         function setupPromptToggles() {
             const promptToggles = document.querySelectorAll('.prompt-toggle');
@@ -8108,6 +8248,9 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Response Mode modal
             setupResponseModeModal();
+            
+            // Setup Prompt modal
+            setupPromptModal();
             
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();

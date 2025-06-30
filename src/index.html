@@ -7206,7 +7206,6 @@ const GRAPH_PERMISSIONS = [
         // Setup Response Mode Toggle functionality
         function setupResponseModeToggles() {
             const responseModeToggles = document.querySelectorAll('.response-mode-toggle');
-            const responseModeHidden = document.getElementById('responseMode');
             const responseModeDescription = document.getElementById('responseModeDescription');
             const responseModeRecommendation = document.getElementById('responseModeRecommendation');
             
@@ -7330,7 +7329,7 @@ const GRAPH_PERMISSIONS = [
             
             // Fields to hide for admin consent
             const fieldsToHide = [
-                document.querySelector('[for="responseType"]').closest('.space-y-2'), // Response Type field
+                document.getElementById('responseTypeInfoBtn').closest('.space-y-2'), // Response Type field
                 document.querySelector('[for="state"]').closest('.space-y-2'), // State field (optional params)
                 document.querySelector('[for="nonce"]').closest('.space-y-2'), // Nonce field
                 document.getElementById('responseModeInfoBtn').closest('.space-y-2'), // Response Mode field
@@ -7402,56 +7401,61 @@ const GRAPH_PERMISSIONS = [
         }
 
         // Event listener for URL type change
-        urlType.addEventListener('change', () => {
-            toggleUrlTypeFields();
-            generateUrlRealTime();
-        });
-        
-        // Event listeners for button-style selectors
-        document.getElementById('authUrlOption').addEventListener('click', () => {
-            if (urlType.checked) {
-                urlType.checked = false;
+        // Setup URL Type Toggle functionality
+        function setupUrlTypeToggles() {
+            // Event listeners for URL type change
+            urlType.addEventListener('change', () => {
                 toggleUrlTypeFields();
-                generateUrlRealTime();
-            }
-        });
-        
-        document.getElementById('adminConsentOption').addEventListener('click', () => {
-            if (!urlType.checked) {
-                urlType.checked = true;
-                toggleUrlTypeFields();
-                generateUrlRealTime();
-            }
-        });
-        
-        // Event listeners for base URL type option buttons
-        document.querySelectorAll('.base-url-option').forEach(option => {
-            option.addEventListener('click', () => {
-                const value = option.getAttribute('data-value');
-                
-                // Remove active class from all options
-                document.querySelectorAll('.base-url-option').forEach(opt => {
-                    opt.classList.remove('active');
-                });
-                
-                // Add active class to clicked option
-                option.classList.add('active');
-                
-                // Update hidden input value
-                baseUrlType.value = value;
-                
-                // Update tenant field visibility and URL
-                toggleTenantIdField();
                 generateUrlRealTime();
             });
-        });
-        
-        // Event listener for optional parameters toggle
-        toggleOptionalParamsButton.addEventListener('click', toggleOptionalParams);
-        
-        // Event listeners for tab switching
-        formTab.addEventListener('click', () => switchTab('form'));
-        aboutTab.addEventListener('click', () => switchTab('about'));
+            
+            // Event listeners for button-style selectors
+            document.getElementById('authUrlOption').addEventListener('click', () => {
+                urlType.checked = false;
+                toggleUrlTypeFields();
+                // Manually trigger the change event that the real-time listener is expecting
+                urlType.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            
+            document.getElementById('adminConsentOption').addEventListener('click', () => {
+                urlType.checked = true;
+                toggleUrlTypeFields();
+                // Manually trigger the change event that the real-time listener is expecting
+                urlType.dispatchEvent(new Event('change', { bubbles: true }));
+            });
+            
+            // Event listeners for base URL type option buttons
+            document.querySelectorAll('.base-url-option').forEach(option => {
+                option.addEventListener('click', () => {
+                    const value = option.getAttribute('data-value');
+                    
+                    // Remove active class from all options
+                    document.querySelectorAll('.base-url-option').forEach(opt => {
+                        opt.classList.remove('active');
+                    });
+                    
+                    // Add active class to clicked option
+                    option.classList.add('active');
+                    
+                    // Update hidden input value
+                    baseUrlType.value = value;
+                    
+                    // Update tenant field visibility and URL
+                    toggleTenantIdField();
+                    generateUrlRealTime();
+                });
+            });
+        }
+
+        // Setup UI Event Listeners
+        function setupUIEventListeners() {
+            // Event listener for optional parameters toggle
+            toggleOptionalParamsButton.addEventListener('click', toggleOptionalParams);
+            
+            // Event listeners for tab switching
+            formTab.addEventListener('click', () => switchTab('form'));
+            aboutTab.addEventListener('click', () => switchTab('about'));
+        }
         
         // Initial call to set correct visibility on load
         document.addEventListener('DOMContentLoaded', function() {
@@ -7697,6 +7701,12 @@ const GRAPH_PERMISSIONS = [
             // Setup Graph Permission modal
             initializePermissionModal();
             
+            // Setup URL Type toggles
+            setupUrlTypeToggles();
+            
+            // Setup UI Event Listeners
+            setupUIEventListeners();
+            
             // Setup scope toggles
             setupScopeToggles();
             
@@ -7721,18 +7731,24 @@ const GRAPH_PERMISSIONS = [
             // Add real-time listeners and generate initial URL
             addRealTimeListeners();
             generateUrlRealTime();
+            
+            // Setup Generate Button Event Listeners
+            setupGenerateButtonListeners();
         });
 
-        // Event listeners for generate buttons
-        document.getElementById('generateState').addEventListener('click', () => {
-            stateInput.value = generateRandomString(32);
-            generateUrlRealTime(); // Update URL immediately
-        });
+        // Setup Generate Button Event Listeners
+        function setupGenerateButtonListeners() {
+            // Event listeners for generate buttons
+            document.getElementById('generateState').addEventListener('click', () => {
+                stateInput.value = generateRandomString(32);
+                generateUrlRealTime(); // Update URL immediately
+            });
 
-        document.getElementById('generateNonce').addEventListener('click', () => {
-            nonceInput.value = generateRandomString(32);
-            generateUrlRealTime(); // Update URL immediately
-        });
+            document.getElementById('generateNonce').addEventListener('click', () => {
+                nonceInput.value = generateRandomString(32);
+                generateUrlRealTime(); // Update URL immediately
+            });
+        }
 
     </script>
 </body>

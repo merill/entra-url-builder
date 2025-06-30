@@ -1265,7 +1265,7 @@
                                 <span class="text-red-500">*</span>
                             </label>
                             <input type="url" id="redirectUri" class="input" placeholder="e.g., http://localhost:3000/callback" required>
-                            <p class="text-xs text-gray-500" id="redirectUriHelp">Where users are sent after authentication. Must exactly match a URI configured in your app registration's Authentication settings</p>
+                            <p class="text-xs text-gray-500" id="redirectUriHelp">Where users are sent after authentication. Must exactly match a URI configured in your app registration's Authentication settings. For testing, you can use <a href="https://jwt.ms" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">https://jwt.ms</a> to view returned tokens.</p>
                         </div>
                         
                         <div class="space-y-2">
@@ -7967,7 +7967,7 @@ const GRAPH_PERMISSIONS = [
                 }
                 
                 // Update help text for admin consent
-                document.getElementById('redirectUriHelp').textContent = 'Redirect URI for admin consent callback. Must exactly match a URI configured in your app registration\'s Authentication settings';
+                document.getElementById('redirectUriHelp').innerHTML = 'Redirect URI for admin consent callback. Must exactly match a URI configured in your app registration\'s Authentication settings. For testing, you can use <a href="https://jwt.ms" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">https://jwt.ms</a> to view returned tokens.';
                 document.getElementById('scopeHelp').textContent = 'API permissions that require admin consent. Use space-separated scopes like https://graph.microsoft.com/.default';
                 
                 // Make redirect URI and scope required for admin consent
@@ -7989,7 +7989,7 @@ const GRAPH_PERMISSIONS = [
                 }
                 
                 // Restore original help text
-                document.getElementById('redirectUriHelp').textContent = 'Where users are sent after authentication. Must exactly match a URI configured in your app registration\'s Authentication settings';
+                document.getElementById('redirectUriHelp').innerHTML = 'Where users are sent after authentication. Must exactly match a URI configured in your app registration\'s Authentication settings. For testing, you can use <a href="https://jwt.ms" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">https://jwt.ms</a> to view returned tokens.';
                 document.getElementById('scopeHelp').textContent = 'Permissions your app requests. Include \'openid\' for OIDC, \'profile\' for user info, \'email\' for email claims, \'offline_access\' for refresh tokens, plus any API scopes';
                 
                 // Restore required fields

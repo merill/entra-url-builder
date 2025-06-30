@@ -979,6 +979,12 @@
             margin: 0 auto 0.75rem auto;
         }
         
+        /* Help text alignment in sticky mode */
+        .generated-url-sticky > p {
+            max-width: 1024px;
+            margin: 0 auto 0.75rem auto;
+        }
+        
         .generated-url-sticky textarea {
             font-size: 0.75rem;
             min-height: 2.5rem;
@@ -1092,7 +1098,7 @@
                     </div>
                     <div class="text-center md:text-left">
                         <h1 class="text-2xl font-bold text-gray-900">Microsoft Entra Sign-in URL Builder</h1>
-                        <p class="text-sm text-gray-600">Generate OAuth 2.0 authorization URLs for Microsoft Entra ID and learn about OAuth & OpenID Connect</p>
+                        <p class="text-sm text-gray-600">Generate OAuth 2.0 authorization URLs for Microsoft Entra ID</p>
                     </div>
                 </div>
                 <div class="flex-shrink-0 order-3 md:order-none mx-auto md:mx-0">
@@ -1103,23 +1109,7 @@
 
         <!-- Main Form -->
         <div class="card">
-            <!-- Tab Navigation -->
-            <nav class="tab-nav">
-                <button id="formTab" class="tab-button active">
-                    <i data-lucide="settings" class="w-4 h-4 inline mr-2"></i>
-                    URL Builder
-                </button>
-                <button id="aboutTab" class="tab-button">
-                    <i data-lucide="info" class="w-4 h-4 inline mr-2"></i>
-                    About
-                </button>
-            </nav>
-
-            <!-- Tab Content Wrapper -->
-            <div class="tab-content-wrapper">
-                <!-- Form Tab Content -->
-                <div id="formTabContent" class="tab-content active">
-                <form id="urlForm" class="space-y-8">
+            <form id="urlForm" class="space-y-8 p-8">
                 
                 <!-- Real-time Generated URL Section -->
                 <div id="generatedUrlSection" class="space-y-4">
@@ -1128,6 +1118,11 @@
                         <img src="icon.svg" alt="Entra Logo" class="url-header-logo">
                         <h2 class="text-lg font-semibold text-gray-900">Microsoft Entra Sign In URL</h2>
                     </div>
+                    
+                    <p class="text-sm text-gray-500 mb-4 flex items-center gap-2">
+                        <i data-lucide="info" class="w-4 h-4 flex-shrink-0"></i>
+                        Fill in the required fields below to generate your sign-in URL
+                    </p>
                     
                     <div class="space-y-4">
                         <div class="generated-url-wrapper">
@@ -1579,60 +1574,6 @@
                     </button>
                 </div>
                 </form>
-                </div>
-
-                <!-- About Tab Content -->
-                <div id="aboutTabContent" class="tab-content">
-                <div class="prose max-w-none">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">About Entra Sign-in URL Builder</h2>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm text-gray-600">
-                        <div>
-                            <h3 class="font-medium text-gray-900 mb-2">What is this tool?</h3>
-                            <p class="mb-4">The Entra Sign-in URL Builder is a free online tool that helps developers generate Microsoft Entra ID OAuth 2.0 authorization URLs and admin consent URLs. This tool simplifies the process of creating properly formatted sign-in URLs for various authentication scenarios and tenant-wide consent flows.</p>
-                            
-                            <h3 class="font-medium text-gray-900 mb-2">Key Features</h3>
-                            <ul class="list-disc list-inside space-y-1 mb-4">
-                                <li>Support for single-tenant, multi-tenant, and consumer flows</li>
-                                <li>Admin consent URL generation for tenant-wide permissions</li>
-                                <li>Customizable OAuth 2.0 parameters</li>
-                                <li>CSRF and replay protection with state and nonce generation</li>
-                                <li>Copy-to-clipboard functionality</li>
-                                <li>Real-time URL validation</li>
-                            </ul>
-                        </div>
-                        <div>
-                            <h3 class="font-medium text-gray-900 mb-2">Supported Authentication Flows</h3>
-                            <ul class="list-disc list-inside space-y-1 mb-4">
-                                <li><strong>Authorization Code Flow:</strong> Most secure flow for web applications</li>
-                                <li><strong>Implicit Flow:</strong> For single-page applications (deprecated)</li>
-                                <li><strong>Hybrid Flow:</strong> Combination of code and implicit flows</li>
-                            </ul>
-                            
-                            <h3 class="font-medium text-gray-900 mb-2">Use Cases</h3>
-                            <ul class="list-disc list-inside space-y-1">
-                                <li>Testing Microsoft Graph API integrations</li>
-                                <li>Debugging Entra ID authentication issues</li>
-                                <li>Creating sign-in links for applications</li>
-                                <li>Generating admin consent URLs for tenant-wide permissions</li>
-                                <li>Learning OAuth 2.0 and OpenID Connect flows</li>
-                                <li>Rapid prototyping of authentication workflows</li>
-                            </ul>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-6 p-4 bg-blue-50 rounded-lg">
-                        <h3 class="font-medium text-blue-900 mb-2">💡 Pro Tips</h3>
-                        <ul class="text-sm text-blue-800 space-y-1">
-                            <li>• Always use HTTPS redirect URIs in production environments</li>
-                            <li>• Include appropriate scopes based on your application's requirements</li>
-                            <li>• Use the state parameter to prevent CSRF attacks</li>
-                            <li>• For admin consent, use .default scope to request all configured permissions</li>
-                            <li>• Test with different tenant types to ensure compatibility</li>
-                        </ul>
-                    </div>
-                </div>
-                </div>
-            </div>
         </div>
 
     </div>
@@ -7142,10 +7083,6 @@ const GRAPH_PERMISSIONS = [
         const toggleOptionalParamsButton = document.getElementById('toggleOptionalParams');
         const optionalParamsSection = document.getElementById('optionalParamsSection');
         const optionalParamsIcon = document.getElementById('optionalParamsIcon');
-        const formTab = document.getElementById('formTab');
-        const aboutTab = document.getElementById('aboutTab');
-        const formTabContent = document.getElementById('formTabContent');
-        const aboutTabContent = document.getElementById('aboutTabContent');
 
         // Function to toggle optional parameters visibility
         function toggleOptionalParams() {
@@ -7167,24 +7104,6 @@ const GRAPH_PERMISSIONS = [
             // Reinitialize Lucide icons for the updated icon
             if (typeof lucide !== 'undefined') {
                 lucide.createIcons();
-            }
-        }
-
-        // Function to switch tabs
-        function switchTab(tabName) {
-            // Remove active class from all tabs and contents
-            formTab.classList.remove('active');
-            aboutTab.classList.remove('active');
-            formTabContent.classList.remove('active');
-            aboutTabContent.classList.remove('active');
-            
-            // Add active class to selected tab and content
-            if (tabName === 'form') {
-                formTab.classList.add('active');
-                formTabContent.classList.add('active');
-            } else if (tabName === 'about') {
-                aboutTab.classList.add('active');
-                aboutTabContent.classList.add('active');
             }
         }
 
@@ -8062,10 +7981,6 @@ const GRAPH_PERMISSIONS = [
         function setupUIEventListeners() {
             // Event listener for optional parameters toggle
             toggleOptionalParamsButton.addEventListener('click', toggleOptionalParams);
-            
-            // Event listeners for tab switching
-            formTab.addEventListener('click', () => switchTab('form'));
-            aboutTab.addEventListener('click', () => switchTab('about'));
         }
         
         // Initial call to set correct visibility on load

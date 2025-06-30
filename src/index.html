@@ -831,6 +831,68 @@
             flex: 1;
         }
         
+        /* Prompt Toggle Styles */
+        .prompt-toggle {
+            padding: 0.5rem 0.75rem;
+            border: 2px solid #e5e7eb;
+            border-radius: 0.5rem;
+            background: white;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            position: relative;
+            min-height: 2.5rem;
+            white-space: nowrap;
+            width: auto;
+        }
+        
+        .prompt-toggle:hover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.15);
+        }
+        
+        .prompt-toggle.active {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+            color: #1e40af;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
+            font-weight: 600;
+        }
+        
+        .prompt-icon {
+            width: 16px;
+            height: 16px;
+            flex-shrink: 0;
+        }
+        
+        /* Individual prompt icon colors */
+        .prompt-toggle[data-prompt="login"] .prompt-icon {
+            color: #dc2626; /* Red for login prompt */
+        }
+        
+        .prompt-toggle[data-prompt="none"] .prompt-icon {
+            color: #6b7280; /* Gray for none prompt */
+        }
+        
+        .prompt-toggle[data-prompt="consent"] .prompt-icon {
+            color: #059669; /* Green for consent prompt */
+        }
+        
+        .prompt-toggle[data-prompt="select_account"] .prompt-icon {
+            color: #7c3aed; /* Purple for select_account prompt */
+        }
+        
+        .prompt-name {
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+        }
+        
         /* Sticky Generated URL Styles */
         .generated-url-sticky {
             position: fixed;
@@ -1309,7 +1371,7 @@
                         <i data-lucide="chevron-down" class="w-5 h-5 text-gray-600 transition-transform duration-200" id="optionalParamsIcon"></i>
                     </div>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 field-hidden" id="optionalParamsSection">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 field-hidden" id="optionalParamsSection">
                         <div class="space-y-2">
                             <label for="state" class="label">State</label>
                             <div class="flex gap-2">
@@ -1368,15 +1430,42 @@
                         </div>
                         
                         <div class="space-y-2">
-                            <label for="prompt" class="label">Prompt</label>
-                            <select id="prompt" class="select">
-                                <option value="">None</option>
-                                <option value="select_account">select_account</option>
-                                <option value="consent">consent</option>
-                                <option value="login">login</option>
-                                <option value="none">none (silent)</option>
-                            </select>
-                            <p class="text-xs text-gray-500">Controls user interaction: none (default), select_account (show account picker), consent (force consent screen), login (force re-authentication), none (silent auth)</p>
+                            <div class="flex items-center gap-2 mb-3">
+                                <label class="label">Prompt</label>
+                                <button type="button" id="promptInfoBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Learn about prompt parameter">
+                                    <i data-lucide="info" class="w-4 h-4"></i>
+                                </button>
+                            </div>
+                            
+                            <!-- Prompt Toggles -->
+                            <div class="bg-gray-50 border border-gray-200 rounded-lg p-4 mb-3">
+                                <div class="flex flex-wrap gap-2">
+                                    <button type="button" class="prompt-toggle" data-prompt="login" title="Forces user to enter credentials, negating single sign-on">
+                                        <i data-lucide="log-in" class="prompt-icon"></i>
+                                        <span class="prompt-name">login</span>
+                                    </button>
+                                    <button type="button" class="prompt-toggle" data-prompt="none" title="Silent authentication - no interactive prompt shown">
+                                        <i data-lucide="eye-off" class="prompt-icon"></i>
+                                        <span class="prompt-name">none</span>
+                                    </button>
+                                    <button type="button" class="prompt-toggle" data-prompt="consent" title="Triggers OAuth consent dialog after sign-in">
+                                        <i data-lucide="shield-check" class="prompt-icon"></i>
+                                        <span class="prompt-name">consent</span>
+                                    </button>
+                                    <button type="button" class="prompt-toggle" data-prompt="select_account" title="Shows account selection experience">
+                                        <i data-lucide="users" class="prompt-icon"></i>
+                                        <span class="prompt-name">select_account</span>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <!-- Hidden input to store the selected prompt -->
+                            <input type="hidden" id="prompt" value="">
+                            
+                            <div class="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-3">
+                                <p class="font-medium mb-1" id="promptDescription">Default behavior - allows single sign-on when possible.</p>
+                                <p class="text-gray-500" id="promptRecommendation">The user will not be forced to re-authenticate unless necessary.</p>
+                            </div>
                         </div>
                         
                         <div class="space-y-2">
@@ -6853,7 +6942,7 @@ const GRAPH_PERMISSIONS = [
         const stateInput = document.getElementById('state');
         const nonceInput = document.getElementById('nonce');
         const responseModeHidden = document.getElementById('responseMode');
-        const promptSelect = document.getElementById('prompt');
+        const promptHidden = document.getElementById('prompt');
         const loginHintInput = document.getElementById('loginHint');
         const domainHintInput = document.getElementById('domainHint');
         const adminConsentFields = document.getElementById('adminConsentFields');
@@ -7468,6 +7557,78 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // Setup Prompt Toggles functionality
+        function setupPromptToggles() {
+            const promptToggles = document.querySelectorAll('.prompt-toggle');
+            const promptDescription = document.getElementById('promptDescription');
+            const promptRecommendation = document.getElementById('promptRecommendation');
+            const promptHidden = document.getElementById('prompt');
+            
+            // Prompt descriptions and recommendations
+            const promptInfo = {
+                'login': {
+                    description: 'Forces user to enter credentials, negating single sign-on.',
+                    recommendation: 'Best for: Applications requiring fresh authentication. User will always be prompted to sign in, even if already authenticated.'
+                },
+                'none': {
+                    description: 'Silent authentication - no interactive prompt shown.',
+                    recommendation: 'Best for: Background authentication checks. If user is not already authenticated, request will fail silently.'
+                },
+                'consent': {
+                    description: 'Triggers OAuth consent dialog after sign-in.',
+                    recommendation: 'Best for: Applications requiring explicit user consent. Shows permission dialog even if user previously consented.'
+                },
+                'select_account': {
+                    description: 'Shows account selection experience.',
+                    recommendation: 'Best for: Multi-account scenarios. User will be prompted to select from available accounts, even if only one is available.'
+                }
+            };
+            
+            function updatePromptSelection(prompt) {
+                // Update all toggle states
+                promptToggles.forEach(toggle => {
+                    const togglePrompt = toggle.getAttribute('data-prompt');
+                    if (togglePrompt === prompt) {
+                        toggle.classList.add('active');
+                    } else {
+                        toggle.classList.remove('active');
+                    }
+                });
+                
+                // Update hidden input
+                promptHidden.value = prompt;
+                
+                // Update description and recommendation
+                const info = promptInfo[prompt];
+                if (info) {
+                    promptDescription.textContent = info.description;
+                    promptRecommendation.textContent = info.recommendation;
+                } else {
+                    promptDescription.textContent = 'Default behavior - allows single sign-on when possible.';
+                    promptRecommendation.textContent = 'The user will not be forced to re-authenticate unless necessary.';
+                }
+                
+                // Regenerate URL in real-time
+                generateUrlRealTime();
+            }
+            
+            // Add click handlers to all prompt toggles
+            promptToggles.forEach(toggle => {
+                toggle.addEventListener('click', () => {
+                    const prompt = toggle.getAttribute('data-prompt');
+                    if (toggle.classList.contains('active')) {
+                        // If already selected, deselect (make optional)
+                        updatePromptSelection('');
+                    } else {
+                        updatePromptSelection(prompt);
+                    }
+                });
+            });
+            
+            // Initialize with no selection (prompt is optional)
+            updatePromptSelection('');
+        }
+
         // Function to toggle fields based on URL type
         function toggleUrlTypeFields() {
             const isAdminConsent = urlType.checked; // Changed from urlType.value === 'admin_consent' to urlType.checked
@@ -7490,7 +7651,7 @@ const GRAPH_PERMISSIONS = [
                 document.querySelector('[for="state"]').closest('.space-y-2'), // State field (optional params)
                 document.querySelector('[for="nonce"]').closest('.space-y-2'), // Nonce field
                 document.getElementById('responseModeInfoBtn').closest('.space-y-2'), // Response Mode field
-                document.querySelector('[for="prompt"]').closest('.space-y-2'), // Prompt field
+                document.getElementById('promptInfoBtn').closest('.space-y-2'), // Prompt field
                 document.querySelector('[for="loginHint"]').closest('.space-y-2'), // Login Hint field
                 document.querySelector('[for="domainHint"]').closest('.space-y-2') // Domain Hint field
             ];
@@ -7746,8 +7907,8 @@ const GRAPH_PERMISSIONS = [
                 if (responseModeHidden.value) {
                     params.append('response_mode', responseModeHidden.value);
                 }
-                if (promptSelect.value) {
-                    params.append('prompt', promptSelect.value);
+                if (promptHidden.value) {
+                    params.append('prompt', promptHidden.value);
                 }
                 if (loginHintInput.value.trim()) {
                     params.append('login_hint', loginHintInput.value.trim());
@@ -7840,6 +8001,19 @@ const GRAPH_PERMISSIONS = [
                 responseModeRecommendation.textContent = 'Each mode has different security implications and use cases.';
             }
             
+            // Reset prompt toggles
+            document.querySelectorAll('.prompt-toggle').forEach(toggle => {
+                toggle.classList.remove('active');
+            });
+            const promptDescription = document.getElementById('promptDescription');
+            const promptRecommendation = document.getElementById('promptRecommendation');
+            if (promptDescription) {
+                promptDescription.textContent = 'Default behavior - allows single sign-on when possible.';
+            }
+            if (promptRecommendation) {
+                promptRecommendation.textContent = 'The user will not be forced to re-authenticate unless necessary.';
+            }
+            
             toggleTenantIdField(); // Reset tenant ID field visibility
             toggleUrlTypeFields(); // Reset URL type fields
             generateUrlRealTime(); // Regenerate URL after clearing
@@ -7858,7 +8032,7 @@ const GRAPH_PERMISSIONS = [
                 stateInput,
                 nonceInput,
                 responseModeHidden,
-                promptSelect,
+                promptHidden,
                 loginHintInput,
                 domainHintInput,
                 adminConsentState,
@@ -7928,6 +8102,9 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Response Mode toggles
             setupResponseModeToggles();
+            
+            // Setup Prompt toggles
+            setupPromptToggles();
             
             // Setup Response Mode modal
             setupResponseModeModal();

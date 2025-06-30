@@ -928,27 +928,9 @@
             font-weight: 600;
         }
         
-        .cloud-icon {
-            width: 16px;
-            height: 16px;
+        .cloud-flag {
+            font-size: 16px;
             flex-shrink: 0;
-        }
-        
-        /* Individual cloud icon colors */
-        .cloud-toggle[data-cloud="default"] .cloud-icon {
-            color: #059669; /* Green for global */
-        }
-        
-        .cloud-toggle[data-cloud="usgov"] .cloud-icon {
-            color: #dc2626; /* Red for US Gov */
-        }
-        
-        .cloud-toggle[data-cloud="china"] .cloud-icon {
-            color: #ea580c; /* Orange for China */
-        }
-        
-        .cloud-toggle[data-cloud="germany"] .cloud-icon {
-            color: #7c3aed; /* Purple for Germany */
         }
         
         .cloud-name {
@@ -1553,19 +1535,19 @@
                     
                     <div class="flex flex-wrap gap-2">
                         <button type="button" class="cloud-toggle active" data-cloud="default" title="Microsoft Global Cloud">
-                            <i data-lucide="globe" class="cloud-icon"></i>
+                            <span class="cloud-flag">🌍</span>
                             <span class="cloud-name">Global</span>
                         </button>
                         <button type="button" class="cloud-toggle" data-cloud="usgov" title="US Government Cloud">
-                            <i data-lucide="shield" class="cloud-icon"></i>
+                            <span class="cloud-flag">🇺🇸</span>
                             <span class="cloud-name">US Gov</span>
                         </button>
                         <button type="button" class="cloud-toggle" data-cloud="china" title="Microsoft Cloud China">
-                            <i data-lucide="flag" class="cloud-icon"></i>
+                            <span class="cloud-flag">🇨🇳</span>
                             <span class="cloud-name">China</span>
                         </button>
                         <button type="button" class="cloud-toggle" data-cloud="germany" title="Microsoft Cloud Germany">
-                            <i data-lucide="map-pin" class="cloud-icon"></i>
+                            <span class="cloud-flag">🇩🇪</span>
                             <span class="cloud-name">Germany</span>
                         </button>
                     </div>
@@ -1575,7 +1557,7 @@
                     
                     <div class="text-xs text-gray-600 bg-blue-50 border border-blue-200 rounded-md p-3">
                         <p class="font-medium mb-1" id="cloudDescription">Microsoft Global Cloud - <span class="text-green-600 font-mono">login.microsoftonline.com</span></p>
-                        <p class="text-gray-500" id="cloudRecommendation">Default cloud environment for most applications worldwide.</p>
+                        <p class="text-gray-500" id="cloudRecommendation">Default public cloud environment for most applications worldwide.</p>
                     </div>
                 </div>
 
@@ -7877,11 +7859,11 @@ const GRAPH_PERMISSIONS = [
             const cloudInfo = {
                 'default': {
                     description: 'Microsoft Global Cloud - <span class="text-green-600 font-mono">login.microsoftonline.com</span>',
-                    recommendation: 'Default cloud environment for most applications worldwide.'
+                    recommendation: 'Default public cloud environment for most applications worldwide.'
                 },
                 'usgov': {
                     description: 'US Government Cloud - <span class="text-green-600 font-mono">login.microsoftonline.us</span>',
-                    recommendation: 'Specialized cloud for US government agencies and contractors with compliance requirements.'
+                    recommendation: 'Specialized cloud for US government agencies and contractors with compliance requirements. Includes GCC, GCC High, and GCC DoD environments.'
                 },
                 'china': {
                     description: 'Microsoft Cloud China - <span class="text-green-600 font-mono">login.chinacloudapi.cn</span>',
@@ -8336,7 +8318,7 @@ const GRAPH_PERMISSIONS = [
                 cloudDescription.innerHTML = 'Microsoft Global Cloud - <span class="text-green-600 font-mono">login.microsoftonline.com</span>';
             }
             if (cloudRecommendation) {
-                cloudRecommendation.textContent = 'Default cloud environment for most applications worldwide.';
+                cloudRecommendation.textContent = 'Default public cloud environment for most applications worldwide.';
             }
             
             toggleTenantIdField(); // Reset tenant ID field visibility

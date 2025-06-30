@@ -859,6 +859,26 @@
                 <div id="formTabContent" class="tab-content active">
                 <form id="urlForm" class="space-y-8">
                 
+                <!-- Real-time Generated URL Section -->
+                <div class="space-y-4">
+                    <div class="flex items-center gap-2 mb-4">
+                        <i data-lucide="link" class="w-4 h-4 text-gray-600"></i>
+                        <h2 class="text-lg font-semibold text-gray-900">Generated URL</h2>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="generated-url-wrapper">
+                            <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here as you fill in the fields..."></textarea>
+                        </div>
+                        <button type="button" id="copyUrl" class="button button-primary w-full">
+                            <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
+                            Copy URL to Clipboard
+                        </button>
+                    </div>
+                    
+                    <div id="messageBox" class="mt-4 hidden"></div>
+                </div>
+                
                 <!-- URL Type Button Selectors -->
                 <div class="url-type-container">
                     <div class="url-type-option active" id="authUrlOption" data-type="auth">
@@ -894,26 +914,6 @@
                 
                 <!-- Hidden input to maintain compatibility with existing JavaScript -->
                 <input type="checkbox" id="urlType" class="hidden-input">
-                
-                <!-- Real-time Generated URL Section -->
-                <div class="space-y-4">
-                    <div class="flex items-center gap-2 mb-4">
-                        <i data-lucide="link" class="w-4 h-4 text-gray-600"></i>
-                        <h2 class="text-lg font-semibold text-gray-900">Generated URL</h2>
-                    </div>
-                    
-                    <div class="space-y-4">
-                        <div class="generated-url-wrapper">
-                            <textarea id="generatedUrl" rows="4" readonly class="textarea font-mono text-sm" placeholder="Your generated URL will appear here as you fill in the fields..."></textarea>
-                        </div>
-                        <button type="button" id="copyUrl" class="button button-primary w-full">
-                            <i data-lucide="clipboard" class="w-4 h-4 mr-2"></i>
-                            Copy URL to Clipboard
-                        </button>
-                    </div>
-                    
-                    <div id="messageBox" class="mt-4 hidden"></div>
-                </div>
                 
                 <div class="space-y-4">
                     <div class="flex items-center gap-2 mb-4">

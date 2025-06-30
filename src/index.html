@@ -493,11 +493,16 @@
         .url-type-title {
             display: flex;
             align-items: center;
+            justify-content: space-between;
             gap: 0.5rem;
             font-weight: 700;
             font-size: 1rem;
             color: #1f2937;
             margin-bottom: 0.5rem;
+        }
+        
+        .url-type-title > .help-icon {
+            margin-left: auto;
         }
         
         .url-type-description {
@@ -1029,7 +1034,10 @@
                 <div class="url-type-container">
                     <div class="url-type-option active" id="authUrlOption" data-type="auth">
                         <div class="url-type-title">
-                            Authorization URL
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="key" class="w-5 h-5 text-blue-600 flex-shrink-0"></i>
+                                <span>Authorization URL</span>
+                            </div>
                             <div class="help-icon">
                                 <i data-lucide="help-circle"></i>
                                 <div class="help-tooltip">
@@ -1044,7 +1052,10 @@
                     
                     <div class="url-type-option" id="adminConsentOption" data-type="admin_consent">
                         <div class="url-type-title">
-                            Admin Consent URL
+                            <div class="flex items-center gap-2">
+                                <i data-lucide="shield-check" class="w-5 h-5 text-green-600 flex-shrink-0"></i>
+                                <span>Admin Consent URL</span>
+                            </div>
                             <div class="help-icon">
                                 <i data-lucide="help-circle"></i>
                                 <div class="help-tooltip">

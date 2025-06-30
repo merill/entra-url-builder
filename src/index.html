@@ -382,6 +382,7 @@
         }
         
         /* Glass blur effect for all help modals */
+        #aboutModal,
         #graphScopesModal,
         #oidcScopesModal,
         #responseTypeModal,
@@ -1067,8 +1068,12 @@
                     </a>
                 </div>
                 
-                <!-- Right side - Social links -->
+                <!-- Right side - About and Social links -->
                 <div class="flex items-center gap-3">
+                    <button type="button" id="aboutBtn" class="text-gray-600 hover:text-gray-900 text-sm font-medium transition-colors">
+                        About
+                    </button>
+                    <div class="w-px h-4 bg-gray-300"></div>
                     <a href="https://x.com/merill" target="_blank" rel="noopener noreferrer" class="text-gray-500 hover:text-gray-700 transition-colors" title="Follow on Twitter/X">
                         <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                             <path d="M11.4678 8.77491L17.2961 2H15.915L10.8543 7.88256L6.81232 2H2.15039L8.26263 10.8955L2.15039 18H3.53159L8.87581 11.7878L13.1444 18H17.8063L11.4675 8.77491H11.4678ZM9.57608 10.9738L8.95678 10.0881L4.02925 3.03974H6.15068L10.1273 8.72795L10.7466 9.61374L15.9156 17.0075H13.7942L9.57608 10.9742V10.9738Z"/>
@@ -1576,6 +1581,141 @@
                 </form>
         </div>
 
+    </div>
+
+    <!-- About Modal -->
+    <div id="aboutModal" class="fixed inset-0 bg-black bg-opacity-50 z-[1100] hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-lg shadow-xl max-w-4xl w-full max-h-[80vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between p-6 border-b border-gray-200">
+                <div class="flex items-center gap-3">
+                    <img src="icon.svg" alt="Entra URL Builder Logo" class="w-8 h-8">
+                    <h3 class="text-xl font-semibold text-gray-900">About Entra Sign-in URL Builder</h3>
+                </div>
+                <button type="button" id="closeAboutModalBtn" class="text-gray-400 hover:text-gray-600 transition-colors" title="Close about modal" aria-label="Close about modal">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Modal Content -->
+            <div class="flex-1 overflow-y-auto p-6">
+                <div class="space-y-6">
+                    <!-- App Description -->
+                    <div>
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            This tool generates Microsoft Entra ID OAuth 2.0 authorization URLs and admin consent URLs. 
+                            Simplify the process of creating properly formatted sign-in URLs for various authentication scenarios.
+                        </p>
+                    </div>
+
+                    <!-- Why I Built This -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="lightbulb" class="w-5 h-5 text-yellow-600"></i>
+                            Why I Built This
+                        </h4>
+                        <p class="text-gray-700 leading-relaxed mb-4">
+                            I created this tool after repeatedly building authentication URLs manually, encoding parameters, looking up docs - 
+                            a tedious process I'd done countless times. This simple tool streamlines URL generation by providing an intuitive 
+                            form interface where you can quickly fill in parameters and instantly get a properly formatted result.
+                        </p>
+                        <p class="text-gray-700 leading-relaxed">
+                            Beyond just convenience, I've made this to serves as an educational resource. Each parameter includes helpful 
+                            tooltips and direct links to official Microsoft documentation and OAuth specs, making it easier for developers 
+                            and admins to understand OAuth 2.0 flows and test things out when working with Microsoft Entra ID authentication.
+                        </p>
+                    </div>
+
+                    <!-- Pro Tips -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="zap" class="w-5 h-5 text-green-600"></i>
+                            Pro Tips
+                        </h4>
+                        <div class="space-y-2">
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"></i>
+                                <span class="text-gray-700">Always use HTTPS redirect URIs in production environments</span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i data-lucide="check" class="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0"></i>
+                                <span class="text-gray-700">Handle the generated tokens with extreme care</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Resources -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="book-open" class="w-5 h-5 text-blue-600"></i>
+                            Resources
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <a href="https://learn.microsoft.com/azure/active-directory/develop/" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">Microsoft Identity Platform Documentation</span>
+                            </a>
+                            <a href="https://learn.microsoft.com/azure/active-directory/develop/v2-oauth2-auth-code-flow" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">OAuth 2.0 Authorization Code Flow</span>
+                            </a>
+                            <a href="https://learn.microsoft.com/azure/active-directory/develop/v2-protocols-oidc" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">OpenID Connect on Microsoft Identity Platform</span>
+                            </a>
+                            <a href="https://learn.microsoft.com/graph/permissions-reference" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">Microsoft Graph Permissions Reference</span>
+                            </a>
+                            <a href="https://learn.microsoft.com/azure/active-directory/develop/v2-admin-consent" target="_blank" rel="noopener noreferrer" class="flex items-center gap-2 p-3 border border-gray-200 rounded-lg hover:border-blue-300 hover:bg-blue-50 transition-colors">
+                                <i data-lucide="external-link" class="w-4 h-4 text-gray-500"></i>
+                                <span class="text-sm text-gray-700">Admin Consent Workflow</span>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Contributing -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="heart-handshake" class="w-5 h-5 text-red-600"></i>
+                            Contributing
+                        </h4>
+                        <p class="text-gray-700 leading-relaxed mb-3">
+                            Found a bug or have a feature request? Please open an issue on GitHub. Contributions are welcome!
+                        </p>
+                        <a href="https://github.com/merill/entra-url-builder/issues" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-800 transition-colors">
+                            <i data-lucide="github" class="w-4 h-4"></i>
+                            Report Issues on GitHub
+                        </a>
+                    </div>
+
+                    <!-- License -->
+                    <div>
+                        <h4 class="text-lg font-semibold text-gray-900 mb-3 flex items-center gap-2">
+                            <i data-lucide="file-text" class="w-5 h-5 text-gray-600"></i>
+                            License
+                        </h4>
+                        <p class="text-gray-700 leading-relaxed">
+                            This project is open source and available under the <a href="https://github.com/merill/entra-url-builder/blob/main/LICENSE" target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:text-blue-800 underline">MIT License</a>.
+                        </p>
+                    </div>
+
+                    <!-- Footer -->
+                    <div class="text-center pt-6 border-t border-gray-200">
+                        <p class="text-gray-600 flex items-center justify-center gap-2">
+                            Made with <i data-lucide="heart" class="w-4 h-4 text-red-500"></i> for the Microsoft Entra community
+                        </p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Modal Footer -->
+            <div class="p-6 border-t border-gray-200 flex justify-end">
+                <button type="button" id="closeAboutModalBtn2" class="px-6 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    Close
+                </button>
+            </div>
+        </div>
     </div>
 
     <!-- Graph Permission Scopes Info Modal -->
@@ -7251,6 +7391,43 @@ const GRAPH_PERMISSIONS = [
             });
         }
 
+        // About Modal Functionality
+        function initializeAboutModal() {
+            const aboutBtn = document.getElementById('aboutBtn');
+            const aboutModal = document.getElementById('aboutModal');
+            const closeAboutBtn = document.getElementById('closeAboutModalBtn');
+            const closeAboutBtn2 = document.getElementById('closeAboutModalBtn2');
+            
+            function openAboutModal() {
+                aboutModal.classList.remove('hidden');
+                document.body.style.overflow = 'hidden';
+            }
+            
+            function closeAboutModal() {
+                aboutModal.classList.add('hidden');
+                document.body.style.overflow = '';
+            }
+            
+            // Event listeners
+            aboutBtn.addEventListener('click', openAboutModal);
+            closeAboutBtn.addEventListener('click', closeAboutModal);
+            closeAboutBtn2.addEventListener('click', closeAboutModal);
+            
+            // Close modal when clicking outside
+            aboutModal.addEventListener('click', (e) => {
+                if (e.target === aboutModal) {
+                    closeAboutModal();
+                }
+            });
+            
+            // Close modal with Escape key
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && !aboutModal.classList.contains('hidden')) {
+                    closeAboutModal();
+                }
+            });
+        }
+
         // Setup scope toggle functionality
         function setupScopeToggles() {
             const scopeToggles = document.querySelectorAll('.scope-toggle');
@@ -8310,6 +8487,9 @@ const GRAPH_PERMISSIONS = [
             
             // Setup Graph Permission modal
             initializePermissionModal();
+            
+            // Setup About modal
+            initializeAboutModal();
             
             // Setup URL Type toggles
             setupUrlTypeToggles();

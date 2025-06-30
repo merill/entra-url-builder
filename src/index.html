@@ -198,6 +198,8 @@
             padding: 0.5rem 0.75rem;
             font-size: 0.875rem;
             transition: border-color 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            overflow-y: auto;
+            resize: vertical;
         }
         
         .textarea:focus {
@@ -226,6 +228,8 @@
             font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
             color: transparent;
             caret-color: #374151;
+            overflow-y: auto;
+            resize: vertical;
         }
         
         /* URL syntax highlighting overlay */
@@ -241,10 +245,17 @@
             line-height: 1.5;
             padding: 0.5rem 0.75rem;
             border-radius: var(--radius);
-            background: #ffffff;
-            overflow: hidden;
+            background: transparent;
+            overflow-y: auto;
             white-space: pre-wrap;
             word-wrap: break-word;
+            scrollbar-width: none; /* Firefox */
+            -ms-overflow-style: none; /* IE/Edge */
+        }
+        
+        /* Hide scrollbar for webkit browsers */
+        .url-highlight-overlay::-webkit-scrollbar {
+            display: none;
         }
         
         /* URL component colors */
@@ -7777,6 +7788,16 @@ const GRAPH_PERMISSIONS = [
             overlay.innerHTML = highlightedUrl;
         }
 
+        // Function to sync scroll between textarea and overlay
+        function syncScroll() {
+            const textarea = document.getElementById('generatedUrl');
+            const overlay = document.getElementById('urlHighlightOverlay');
+            if (textarea && overlay) {
+                overlay.scrollTop = textarea.scrollTop;
+                overlay.scrollLeft = textarea.scrollLeft;
+            }
+        }
+
         // Function to copy the generated URL to clipboard
         function copyUrlToClipboard() {
             if (generatedUrlTextarea.value) {
@@ -7848,6 +7869,9 @@ const GRAPH_PERMISSIONS = [
         // Event listeners
         copyUrlButton.addEventListener('click', copyUrlToClipboard);
         clearFormButton.addEventListener('click', clearForm);
+        
+        // Add scroll sync between textarea and overlay
+        generatedUrlTextarea.addEventListener('scroll', syncScroll);
 
         // Generate a random state and nonce on load for convenience
         function generateRandomString(length) {
